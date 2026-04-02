@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Paperclip, FileIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChatMessage } from '@/types/consultation';
+import { ChatMessage, ChatFile } from '@/types/consultation';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
