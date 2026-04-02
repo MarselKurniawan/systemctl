@@ -162,7 +162,13 @@ export default function ConsultationRoom() {
     const durationMins = Math.max(1, Math.floor(timer.seconds / 60));
     updateConsultation({ status: 'completed', duration: durationMins, end_time: new Date().toISOString() });
   };
-  const handleStartVideo = () => { setChatOpen(true); setStarted(true); updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() }); };
+  const handleStartVideo = () => {
+    updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() });
+    navigate(`/video-call/${id}`);
+  };
+  const handleJoinVideo = () => {
+    navigate(`/video-call/${id}`);
+  };
   const handleEndVideo = () => {
     setEnded(true); timer.stop();
     const durationMins = Math.max(1, Math.floor(timer.seconds / 60));
