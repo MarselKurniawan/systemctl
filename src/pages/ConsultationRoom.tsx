@@ -380,7 +380,11 @@ export default function ConsultationRoom() {
                   ) : (
                     <div className="flex items-center gap-1.5">
                       {timer.isRunning && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                      <span className="text-[13px] font-bold font-mono text-primary">{timer.formatted}</span>
+                      <span className="text-[13px] font-bold text-primary">
+                        {ended || consultation.status === 'completed'
+                          ? formatDurationText(consultation.duration || Math.floor(timer.seconds / 60))
+                          : timer.formatted}
+                      </span>
                       {canEdit && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 ml-1" onClick={() => setEditingDuration(true)}>
                           <Edit2 className="h-3 w-3 text-muted-foreground" />
