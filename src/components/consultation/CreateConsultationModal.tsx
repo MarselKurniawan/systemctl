@@ -287,51 +287,6 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
           )}
 
 
-              {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
-              {nikFound && <p className="text-xs text-emerald-600 font-medium">✓ Data ditemukan & dimuat</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Nama Pengguna</Label>
-              <Input value={form.namaPengguna} onChange={(e) => update('namaPengguna', e.target.value)} />
-            </div>
-          </div>
-
-          {/* Row 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Telp</Label>
-              <Input value={form.telp} onChange={(e) => update('telp', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Tanggal Lahir</Label>
-              <Input type="date" value={form.tanggalLahir} onChange={(e) => update('tanggalLahir', e.target.value)} />
-            </div>
-          </div>
-
-          {/* Row 3 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Jenis Kelamin</Label>
-              <Select value={form.jenisKelamin} onValueChange={(v) => update('jenisKelamin', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Laki Laki">Laki Laki</SelectItem>
-                  <SelectItem value="Perempuan">Perempuan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Penyandang Disabilitas</Label>
-              <Select value={form.penyandangDisabilitas} onValueChange={(v) => update('penyandangDisabilitas', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ya">Ya</SelectItem>
-                  <SelectItem value="Tidak">Tidak</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           {/* Row 4 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
