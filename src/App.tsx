@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "./components/layout/AppLayout";
 import ConsultationList from "./pages/ConsultationList";
 import ConsultationRoom from "./pages/ConsultationRoom";
+import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,7 +20,13 @@ const App = () => (
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<ConsultationList />} />
+            <Route path="/consultation/new" element={<PlaceholderPage />} />
             <Route path="/consultation/:id" element={<ConsultationRoom />} />
+            <Route path="/master/jenis-konsultasi" element={<PlaceholderPage />} />
+            <Route path="/master/jenis-layanan" element={<PlaceholderPage />} />
+            <Route path="/master/jenis-hukum" element={<PlaceholderPage />} />
+            <Route path="/users" element={<PlaceholderPage />} />
+            <Route path="/users/roles" element={<PlaceholderPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
