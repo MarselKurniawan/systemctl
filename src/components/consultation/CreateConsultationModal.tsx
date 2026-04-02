@@ -285,12 +285,8 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
             </div>
             </>
           )}
-              <div className="flex gap-2">
-                <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} className="flex-1" />
-                <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={lookupNik} disabled={form.nik.length !== 16 || nikSearching}>
-                  {nikFound ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <Search className="h-4 w-4" />}
-                </Button>
-              </div>
+
+
               {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
               {nikFound && <p className="text-xs text-emerald-600 font-medium">✓ Data ditemukan & dimuat</p>}
             </div>
