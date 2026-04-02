@@ -13,6 +13,8 @@ export interface Profile {
   nomor_wa: string | null;
   tanggal_lahir: string | null;
   email: string | null;
+  jenis_kelamin: string | null;
+  penyandang_disabilitas: boolean;
   approval_status: ApprovalStatus;
   approved_by: string | null;
   approved_at: string | null;

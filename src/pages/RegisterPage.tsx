@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Gavel, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -14,6 +15,8 @@ export default function RegisterPage() {
     nik: '',
     nomorWa: '',
     tanggalLahir: '',
+    jenisKelamin: '',
+    penyandangDisabilitas: 'false',
     email: '',
     password: '',
   });
@@ -36,6 +39,10 @@ export default function RegisterPage() {
       toast.error('NIK hanya boleh berisi angka (16 digit)');
       return;
     }
+    if (!form.jenisKelamin) {
+      toast.error('Jenis kelamin wajib dipilih');
+      return;
+    }
     if (form.password.length < 6) {
       toast.error('Password minimal 6 karakter');
       return;
@@ -45,11 +52,7 @@ export default function RegisterPage() {
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: {
-        data: {
-          nama: form.nama,
-        },
-      },
+      options: { data: { nama: form.nama } },
     });
 
     if (error) {
@@ -58,13 +61,14 @@ export default function RegisterPage() {
       return;
     }
 
-    // Update profile with additional fields
     if (data.user) {
       await supabase.from('profiles').update({
         nama: form.nama,
         nik: form.nik,
         nomor_wa: form.nomorWa || null,
         tanggal_lahir: form.tanggalLahir || null,
+        jenis_kelamin: form.jenisKelamin,
+        penyandang_disabilitas: form.penyandangDisabilitas === 'true',
       }).eq('user_id', data.user.id);
     }
 
@@ -77,7 +81,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-lg border border-border p-8">
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-6">
             <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center mb-3">
               <Gavel className="h-7 w-7 text-primary-foreground" />
             </div>
@@ -85,7 +89,7 @@ export default function RegisterPage() {
             <p className="text-sm text-muted-foreground mt-1">Bantuan Hukum Online</p>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-3.5">
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Nama Lengkap</Label>
               <Input value={form.nama} onChange={(e) => update('nama', e.target.value)} placeholder="Nama lengkap" />
@@ -93,12 +97,30 @@ export default function RegisterPage() {
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">NIK (16 digit)</Label>
               <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} />
-              {form.nik.length > 0 && form.nik.length < 16 && (
-                <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>
-              )}
-              {form.nik.length === 16 && (
-                <p className="text-xs text-emerald-600">✓ 16 digit</p>
-              )}
+              {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
+              {form.nik.length === 16 && <p className="text-xs text-emerald-600 font-medium">✓ 16 digit</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Jenis Kelamin</Label>
+                <Select value={form.jenisKelamin} onValueChange={(v) => update('jenisKelamin', v)}>
+                  <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                    <SelectItem value="Perempuan">Perempuan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Disabilitas</Label>
+                <Select value={form.penyandangDisabilitas} onValueChange={(v) => update('penyandangDisabilitas', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="false">Tidak</SelectItem>
+                    <SelectItem value="true">Ya</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Nomor WhatsApp</Label>
@@ -115,12 +137,7 @@ export default function RegisterPage() {
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Password</Label>
               <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={(e) => update('password', e.target.value)}
-                  placeholder="Minimal 6 karakter"
-                />
+                <Input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Minimal 6 karakter" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -131,7 +148,7 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-5">
             Sudah punya akun?{' '}
             <Link to="/login" className="text-primary font-semibold hover:underline">Masuk</Link>
           </p>

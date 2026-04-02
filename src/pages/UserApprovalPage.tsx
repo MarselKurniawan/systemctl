@@ -84,6 +84,21 @@ export default function UserApprovalPage() {
                       {p.nik && <span>NIK: {p.nik}</span>}
                       {p.nomor_wa && <span>WA: {p.nomor_wa}</span>}
                       {p.tanggal_lahir && <span>Lahir: {p.tanggal_lahir}</span>}
+                      {p.jenis_kelamin && (
+                        <span className="flex items-center gap-1">
+                          {p.jenis_kelamin === 'Perempuan' ? (
+                            <svg className="h-3 w-3 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="5"/><path d="M12 13v8M9 18h6"/></svg>
+                          ) : (
+                            <svg className="h-3 w-3 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="10" cy="14" r="5"/><path d="M19 5l-4.5 4.5M19 5h-5M19 5v5"/></svg>
+                          )}
+                          {p.jenis_kelamin}
+                        </span>
+                      )}
+                      {p.penyandang_disabilitas && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold">
+                          ♿ Disabilitas
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 mt-2">
                       <Clock className="h-3 w-3 text-amber-500" />

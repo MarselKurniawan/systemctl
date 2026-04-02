@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      master_jenis_hukum: {
+        Row: {
+          created_at: string
+          id: string
+          nama: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nama: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nama?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      master_jenis_layanan: {
+        Row: {
+          created_at: string
+          id: string
+          nama: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nama: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nama?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approval_status: Database["public"]["Enums"]["approval_status"]
@@ -22,9 +64,11 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          jenis_kelamin: string | null
           nama: string
           nik: string | null
           nomor_wa: string | null
+          penyandang_disabilitas: boolean | null
           tanggal_lahir: string | null
           updated_at: string
           user_id: string
@@ -36,9 +80,11 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          jenis_kelamin?: string | null
           nama?: string
           nik?: string | null
           nomor_wa?: string | null
+          penyandang_disabilitas?: boolean | null
           tanggal_lahir?: string | null
           updated_at?: string
           user_id: string
@@ -50,9 +96,11 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          jenis_kelamin?: string | null
           nama?: string
           nik?: string | null
           nomor_wa?: string | null
+          penyandang_disabilitas?: boolean | null
           tanggal_lahir?: string | null
           updated_at?: string
           user_id?: string
