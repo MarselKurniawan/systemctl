@@ -196,15 +196,15 @@ export default function ConsultationRoom() {
       </nav>
 
       {/* Top bar */}
-      <div className="bg-card rounded-lg border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="bg-card rounded-lg border p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link to="/"><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
-          <div>
-            <h1 className="text-lg font-bold">Ruang Konsultasi</h1>
-            <p className="text-xs text-muted-foreground">{consultation.clientName} — {consultation.caseName}</p>
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold truncate">Ruang Konsultasi</h1>
+            <p className="text-xs text-muted-foreground truncate">{consultation.clientName} — {consultation.caseName}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap w-full sm:w-auto">
           {(started || ended) && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
               {timer.isRunning && <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />}

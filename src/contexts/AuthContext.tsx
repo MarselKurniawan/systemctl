@@ -18,6 +18,7 @@ export interface Profile {
   approval_status: ApprovalStatus;
   approved_by: string | null;
   approved_at: string | null;
+  rejection_reason: string | null;
 }
 
 interface AuthContextType {
