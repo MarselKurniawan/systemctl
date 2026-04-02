@@ -4,6 +4,7 @@ import { useAuth, Profile } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { User, Phone, Mail, Calendar, Search, UserCircle } from 'lucide-react';
+import OnlineBadge from '@/components/shared/OnlineBadge';
 
 export default function ClientListPage() {
   const [clients, setClients] = useState<(Profile & { role?: string })[]>([]);
