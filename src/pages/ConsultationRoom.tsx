@@ -1,14 +1,20 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { consultations } from '@/data/mockData';
 import { useTimer } from '@/hooks/useTimer';
 import ChatRoom from '@/components/consultation/ChatRoom';
-import ConsultationDetail from '@/components/consultation/ConsultationDetail';
 import RatingPanel from '@/components/consultation/RatingPanel';
 import CameraModal from '@/components/consultation/CameraModal';
-import ConsultationTimer from '@/components/consultation/ConsultationTimer';
+
+const statusStyle: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  in_progress: 'bg-blue-100 text-blue-800',
+  completed: 'bg-emerald-100 text-emerald-800',
+};
+const statusLabel: Record<string, string> = { pending: 'Pending', in_progress: 'In Progress', completed: 'Completed' };
+const typeLabel: Record<string, string> = { chat: 'Chat Online', offline: 'Offline', video_call: 'Video Call' };
 
 export default function ConsultationRoom() {
   const { id } = useParams();
@@ -22,15 +28,9 @@ export default function ConsultationRoom() {
 
   if (!consultation) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 animate-slide-in">
-        <div className="h-20 w-20 rounded-3xl bg-muted flex items-center justify-center mb-5">
-          <span className="text-3xl">🔍</span>
-        </div>
-        <p className="font-bold text-lg mb-1">Konsultasi tidak ditemukan</p>
-        <p className="text-sm text-muted-foreground mb-5">Data yang Anda cari tidak tersedia</p>
-        <Link to="/">
-          <Button variant="outline" className="gap-2 rounded-xl"><ArrowLeft className="h-4 w-4" /> Kembali</Button>
-        </Link>
+      <div className="flex flex-col items-center justify-center py-24">
+        <p className="font-bold text-lg mb-2">Konsultasi tidak ditemukan</p>
+        <Link to="/" className="text-primary text-sm font-medium hover:underline">← Kembali</Link>
       </div>
     );
   }
@@ -38,6 +38,7 @@ export default function ConsultationRoom() {
   const isOffline = consultation.consultationType === 'offline';
   const isChat = consultation.consultationType === 'chat';
   const isVideo = consultation.consultationType === 'video_call';
+  const showRating = ended || consultation.status === 'completed';
 
   const handleStartOffline = () => { setCameraMode('start'); setCameraOpen(true); };
   const handleEndOffline = () => { setCameraMode('end'); setCameraOpen(true); };
@@ -50,144 +51,181 @@ export default function ConsultationRoom() {
   const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); };
   const handleEndVideo = () => { setEnded(true); timer.stop(); };
 
-  const showStartButton = () => {
-    if (isOffline && !started) return (
-      <Button onClick={handleStartOffline} className="gap-2 h-10 rounded-xl font-semibold shadow-lg shadow-primary/20">
-        <Camera className="h-4 w-4" /> Mulai Konsultasi
-      </Button>
-    );
-    if (isChat && !chatOpen && !ended) return (
-      <Button onClick={handleStartChat} className="gap-2 h-10 rounded-xl font-semibold shadow-lg shadow-primary/20">
-        <MessageCircle className="h-4 w-4" /> Buka Chat
-      </Button>
-    );
-    if (isVideo && !started) return (
-      <Button onClick={handleStartVideo} className="gap-2 h-10 rounded-xl font-semibold shadow-lg shadow-primary/20">
-        <Video className="h-4 w-4" /> Mulai Video
-      </Button>
-    );
-    return null;
-  };
-
-  const showEndButton = () => {
-    if (ended) return null;
-    if (isOffline && started) return (
-      <Button variant="destructive" onClick={handleEndOffline} className="gap-2 h-10 rounded-xl font-semibold">
-        <StopCircle className="h-4 w-4" /> Akhiri
-      </Button>
-    );
-    if (isChat && chatOpen) return (
-      <Button variant="destructive" onClick={handleEndChat} className="gap-2 h-10 rounded-xl font-semibold">
-        <StopCircle className="h-4 w-4" /> Akhiri
-      </Button>
-    );
-    if (isVideo && started) return (
-      <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-10 rounded-xl font-semibold">
-        <StopCircle className="h-4 w-4" /> Akhiri
-      </Button>
-    );
-    return null;
-  };
-
   return (
-    <div className="space-y-5 animate-slide-in">
+    <div className="space-y-5">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-        <Link to="/" className="hover:text-foreground flex items-center gap-1 transition-colors">
-          <Home className="h-3.5 w-3.5" /> Home
-        </Link>
+      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Link to="/" className="hover:text-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Home</Link>
         <ChevronRight className="h-3 w-3 opacity-40" />
-        <Link to="/" className="hover:text-foreground transition-colors">Konsultasi</Link>
+        <Link to="/" className="hover:text-foreground">Konsultasi</Link>
         <ChevronRight className="h-3 w-3 opacity-40" />
-        <span className="text-foreground font-semibold">Detail</span>
+        <span className="text-foreground font-medium">Detail</span>
       </nav>
 
-      {/* Header bar */}
-      <div className="glass-elevated rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <Link to="/">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl shrink-0">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+      {/* Top bar */}
+      <div className="bg-card rounded-lg border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link to="/"><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">Ruang Konsultasi</h1>
+            <h1 className="text-lg font-bold">Ruang Konsultasi</h1>
             <p className="text-xs text-muted-foreground">{consultation.clientName} — {consultation.caseName}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 flex-wrap">
           {(started || ended) && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/70">
-              <ConsultationTimer formatted={timer.formatted} isRunning={timer.isRunning} />
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
+              {timer.isRunning && <span className="h-2 w-2 rounded-full bg-success animate-pulse-live" />}
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <span className="font-mono text-sm font-bold text-primary">{timer.formatted}</span>
             </div>
           )}
-          {showStartButton()}
-          {showEndButton()}
+          {isOffline && !started && <Button onClick={handleStartOffline} className="gap-2 h-9 text-sm font-semibold"><Camera className="h-4 w-4" /> Mulai Konsultasi</Button>}
+          {isOffline && started && !ended && <Button variant="destructive" onClick={handleEndOffline} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
+          {isChat && !chatOpen && !ended && <Button onClick={handleStartChat} className="gap-2 h-9 text-sm font-semibold"><MessageCircle className="h-4 w-4" /> Buka Chat</Button>}
+          {isChat && chatOpen && !ended && <Button variant="destructive" onClick={handleEndChat} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
+          {isVideo && !started && <Button onClick={handleStartVideo} className="gap-2 h-9 text-sm font-semibold"><Video className="h-4 w-4" /> Mulai Video</Button>}
+          {isVideo && started && !ended && <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
         </div>
       </div>
 
-      {/* Main grid - responsive */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left: Chat / Main area */}
-        <div className={`${isVideo && started && !ended ? 'lg:col-span-4' : 'lg:col-span-5'} glass-elevated rounded-2xl overflow-hidden flex flex-col min-h-[420px] lg:min-h-[520px]`}>
-          {(isChat || isVideo) && chatOpen ? (
-            <ChatRoom clientName={consultation.clientName} disabled={ended} />
-          ) : isOffline && started ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-5">
-              <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                <Camera className="h-10 w-10 text-primary/60" />
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        {/* Left: main area - chat/offline/video */}
+        <div className="lg:col-span-3 space-y-5">
+          {/* Chat or main panel */}
+          <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
+            {(isChat || isVideo) && chatOpen ? (
+              <div className="h-[460px] flex flex-col">
+                <ChatRoom clientName={consultation.clientName} disabled={ended} />
               </div>
-              {ended ? (
-                <>
-                  <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
-                    <span className="text-success text-xl">✓</span>
+            ) : isOffline && started ? (
+              <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
+                <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Camera className="h-7 w-7 text-primary/50" />
+                </div>
+                {ended ? (
+                  <div className="text-center">
+                    <p className="font-semibold text-success">✓ Konsultasi Selesai</p>
+                    <p className="text-xs text-muted-foreground mt-1">Sesi telah berakhir</p>
                   </div>
-                  <p className="font-semibold text-success">Konsultasi Selesai</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm font-semibold">Konsultasi Offline Berlangsung</p>
-                  <p className="text-xs text-muted-foreground text-center max-w-[220px]">Sesi konsultasi sedang berjalan. Klik "Akhiri" untuk mengakhiri sesi.</p>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8">
-              <div className="h-20 w-20 rounded-3xl bg-muted/60 flex items-center justify-center mb-4">
-                {isOffline ? <Camera className="h-8 w-8 text-muted-foreground/40" /> : isChat ? <MessageCircle className="h-8 w-8 text-muted-foreground/40" /> : <Video className="h-8 w-8 text-muted-foreground/40" />}
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm font-semibold">Konsultasi Offline Berlangsung</p>
+                    <p className="text-xs text-muted-foreground mt-1">Sesi sedang berjalan</p>
+                  </div>
+                )}
               </div>
-              <p className="text-sm font-semibold text-muted-foreground">Belum dimulai</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Klik tombol di atas untuk memulai sesi</p>
+            ) : (
+              <div className="h-[460px] flex flex-col items-center justify-center p-8">
+                <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center mb-3">
+                  {isOffline ? <Camera className="h-6 w-6 text-muted-foreground/40" /> :
+                   isChat ? <MessageCircle className="h-6 w-6 text-muted-foreground/40" /> :
+                   <Video className="h-6 w-6 text-muted-foreground/40" />}
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Belum dimulai</p>
+                <p className="text-xs text-muted-foreground/60 mt-0.5">Klik tombol di atas untuk memulai sesi</p>
+              </div>
+            )}
+          </div>
+
+          {/* Video call button */}
+          {isVideo && started && !ended && (
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-sm">Video Call</h3>
+                  <p className="text-xs text-muted-foreground">Bergabung ke sesi video call</p>
+                </div>
+                <Button className="gap-2 h-9 text-sm font-semibold" onClick={() => window.open('https://meet.google.com', '_blank')}>
+                  <Video className="h-4 w-4" /> Join Video Call
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Rating (below chat on larger screens) */}
+          {showRating && (
+            <div className="lg:hidden">
+              <RatingPanel />
             </div>
           )}
         </div>
 
-        {/* Middle: Details */}
-        <div className={`${isVideo && started && !ended ? 'lg:col-span-4' : 'lg:col-span-4'}`}>
-          <ConsultationDetail
-            consultation={consultation}
-            timerFormatted={timer.formatted}
-            timerRunning={timer.isRunning}
-          />
-        </div>
+        {/* Right: detail + rating */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Detail card */}
+          <div className="bg-card rounded-lg border">
+            <div className="px-4 py-3 border-b">
+              <h3 className="font-bold text-sm">Detail Konsultasi</h3>
+              <div className="flex gap-2 mt-2">
+                <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${statusStyle[consultation.status]}`}>
+                  {statusLabel[consultation.status]}
+                </span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/10 text-primary">
+                  {typeLabel[consultation.consultationType]}
+                </span>
+              </div>
+            </div>
 
-        {/* Right: Video / Rating */}
-        <div className={`${isVideo && started && !ended ? 'lg:col-span-4' : 'lg:col-span-3'} space-y-5`}>
-          {isVideo && started && !ended && (
-            <div className="glass-elevated rounded-2xl p-5 space-y-4">
-              <h3 className="font-bold tracking-tight">Video Call</h3>
-              <div className="aspect-video rounded-xl bg-gradient-to-br from-foreground/5 to-foreground/[0.02] flex items-center justify-center border border-dashed border-border">
-                <div className="text-center">
-                  <Video className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                  <p className="text-[11px] text-muted-foreground/50 font-medium">Preview Area</p>
+            <div className="p-4 space-y-3">
+              {/* People */}
+              {[
+                { role: 'Pengacara', name: consultation.lawyerName || 'Lawyer' },
+                { role: 'Klien', name: consultation.clientName },
+              ].map((p) => (
+                <div key={p.role} className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{p.role}</p>
+                    <p className="text-sm font-medium">{p.name}</p>
+                  </div>
+                </div>
+              ))}
+
+              <div className="border-t my-3" />
+
+              {/* Info items */}
+              {[
+                { icon: FileText, label: 'Nama Kasus', value: consultation.caseName },
+                { icon: Scale, label: 'Jenis Hukum', value: consultation.lawType },
+                { icon: Calendar, label: 'Tanggal', value: consultation.date },
+                { icon: FileText, label: 'Agenda', value: consultation.agenda },
+              ].map((item) => (
+                <div key={item.label} className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                    <item.icon className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{item.label}</p>
+                    <p className="text-[13px] font-medium">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Duration */}
+              <div className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                  <Clock className="h-3 w-3 text-primary" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Durasi</p>
+                  <div className="flex items-center gap-1.5">
+                    {timer.isRunning && <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-live" />}
+                    <span className="text-[13px] font-bold font-mono text-primary">{timer.formatted}</span>
+                  </div>
                 </div>
               </div>
-              <Button className="w-full gap-2 h-11 rounded-xl font-semibold" onClick={() => window.open('https://meet.google.com', '_blank')}>
-                <Video className="h-4 w-4" /> Join Video Call
-              </Button>
+            </div>
+          </div>
+
+          {/* Rating (right column on large) */}
+          {showRating && (
+            <div className="hidden lg:block">
+              <RatingPanel />
             </div>
           )}
-          {(ended || consultation.status === 'completed') && <RatingPanel />}
         </div>
       </div>
 

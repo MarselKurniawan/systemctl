@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Download, ExternalLink, Trash2, Plus, Monitor, MessageCircle, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { consultations } from '@/data/mockData';
 
-const statusConfig: Record<string, { bg: string; dot: string; label: string }> = {
-  pending: { bg: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-400', label: 'Pending' },
-  in_progress: { bg: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-400', label: 'In Progress' },
-  completed: { bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-400', label: 'Completed' },
+const statusStyle: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  in_progress: 'bg-blue-100 text-blue-800',
+  completed: 'bg-emerald-100 text-emerald-800',
 };
-
-const typeConfig: Record<string, { icon: typeof Monitor; label: string; color: string }> = {
-  offline: { icon: Monitor, label: 'Offline', color: 'bg-slate-100 text-slate-600' },
-  chat: { icon: MessageCircle, label: 'Chat', color: 'bg-primary/10 text-primary' },
-  video_call: { icon: Video, label: 'Video', color: 'bg-info/10 text-info' },
+const statusLabel: Record<string, string> = {
+  pending: 'Pending',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+};
+const typeStyle: Record<string, { icon: typeof Monitor; label: string; cls: string }> = {
+  offline: { icon: Monitor, label: 'Offline', cls: 'bg-slate-100 text-slate-700' },
+  chat: { icon: MessageCircle, label: 'Chat', cls: 'bg-teal-100 text-teal-700' },
+  video_call: { icon: Video, label: 'Video Call', cls: 'bg-indigo-100 text-indigo-700' },
 };
 
 export default function ConsultationList() {
@@ -27,112 +30,99 @@ export default function ConsultationList() {
       c.caseName.toLowerCase().includes(search.toLowerCase())
   );
 
+  const stats = [
+    { label: 'Total Konsultasi', value: consultations.length, cls: 'border-l-primary' },
+    { label: 'Pending', value: consultations.filter(c => c.status === 'pending').length, cls: 'border-l-warning' },
+    { label: 'In Progress', value: consultations.filter(c => c.status === 'in_progress').length, cls: 'border-l-info' },
+    { label: 'Selesai', value: consultations.filter(c => c.status === 'completed').length, cls: 'border-l-success' },
+  ];
+
   return (
-    <div className="space-y-6 animate-slide-in">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Riwayat Konsultasi</h1>
-          <p className="text-sm text-muted-foreground mt-1">Kelola dan pantau semua sesi konsultasi hukum</p>
+          <h1 className="text-xl font-bold">Riwayat Konsultasi</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Kelola dan pantau semua sesi konsultasi hukum</p>
         </div>
-        <Button onClick={() => navigate('/consultation/new')} className="gap-2 h-11 px-5 rounded-xl font-semibold shadow-lg shadow-primary/20">
+        <Button onClick={() => navigate('/consultation/new')} className="gap-2 h-10 font-semibold">
           <Plus className="h-4 w-4" /> Buat Konsultasi
         </Button>
       </div>
 
-      {/* Stats cards */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: consultations.length, color: 'from-primary/10 to-primary/5 text-primary' },
-          { label: 'Pending', value: consultations.filter(c => c.status === 'pending').length, color: 'from-amber-100/80 to-amber-50 text-amber-700' },
-          { label: 'In Progress', value: consultations.filter(c => c.status === 'in_progress').length, color: 'from-blue-100/80 to-blue-50 text-blue-700' },
-          { label: 'Completed', value: consultations.filter(c => c.status === 'completed').length, color: 'from-emerald-100/80 to-emerald-50 text-emerald-700' },
-        ].map((stat) => (
-          <div key={stat.label} className={`bg-gradient-to-br ${stat.color} rounded-2xl p-4 border border-border/30`}>
-            <p className="text-[11px] font-semibold uppercase tracking-wider opacity-70">{stat.label}</p>
-            <p className="text-2xl font-bold mt-1">{stat.value}</p>
+        {stats.map((s) => (
+          <div key={s.label} className={`bg-card rounded-lg border border-l-4 ${s.cls} p-4`}>
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{s.label}</p>
+            <p className="text-2xl font-bold mt-1">{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="glass-elevated rounded-2xl overflow-hidden">
-        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+      <div className="bg-card rounded-lg border shadow-sm">
+        <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari konsultasi..."
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-muted/50 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 border-0 transition-all"
+              className="w-full h-9 pl-9 pr-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 transition"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs rounded-xl">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
               <SlidersHorizontal className="h-3.5 w-3.5" /> Filter
             </Button>
-            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs rounded-xl">
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs">
               <Download className="h-3.5 w-3.5" /> Export
             </Button>
           </div>
         </div>
 
-        {/* Mobile cards / Desktop table */}
+        {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/30">
-                {['No', 'Klien', 'Kasus', 'Tipe', 'Layanan', 'Hukum', 'Tanggal', 'Status', ''].map((h) => (
-                  <th key={h} className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 text-left first:pl-6 last:pr-6">
-                    {h}
-                  </th>
+              <tr className="border-b bg-muted/40">
+                {['No', 'Klien', 'Nama Kasus', 'Tipe', 'Layanan', 'Hukum', 'Tanggal', 'Status', ''].map((h) => (
+                  <th key={h} className="py-3 px-4 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/50">
+            <tbody className="divide-y">
               {filtered.map((c) => {
-                const type = typeConfig[c.consultationType];
-                const status = statusConfig[c.status];
-                const TypeIcon = type.icon;
+                const t = typeStyle[c.consultationType];
+                const TypeIcon = t.icon;
                 return (
-                  <tr key={c.id} className="hover:bg-muted/20 transition-colors group cursor-pointer" onClick={() => navigate(`/consultation/${c.id}`)}>
-                    <td className="py-3.5 px-4 pl-6 text-sm text-muted-foreground font-medium">{c.no}</td>
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-                          {c.clientName.charAt(0)}
-                        </div>
-                        <span className="text-sm font-semibold">{c.clientName}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 text-sm text-muted-foreground max-w-[180px] truncate">{c.caseName}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold ${type.color}`}>
-                        <TypeIcon className="h-3 w-3" /> {type.label}
+                  <tr key={c.id} className="hover:bg-muted/30 transition-colors group cursor-pointer" onClick={() => navigate(`/consultation/${c.id}`)}>
+                    <td className="py-3 px-4 text-muted-foreground">{c.no}</td>
+                    <td className="py-3 px-4 font-medium">{c.clientName}</td>
+                    <td className="py-3 px-4 text-muted-foreground max-w-[180px] truncate">{c.caseName}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold ${t.cls}`}>
+                        <TypeIcon className="h-3 w-3" /> {t.label}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-[11px] text-muted-foreground max-w-[130px] truncate">{c.serviceType}</td>
-                    <td className="py-3.5 px-4 text-xs font-medium">{c.lawType}</td>
-                    <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{c.date}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${status.bg}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                        {status.label}
+                    <td className="py-3 px-4 text-[11px] text-muted-foreground max-w-[120px] truncate">{c.serviceType}</td>
+                    <td className="py-3 px-4 text-xs">{c.lawType}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">{c.date}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-semibold ${statusStyle[c.status]}`}>
+                        {statusLabel[c.status]}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 pr-6">
+                    <td className="py-3 px-4">
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/consultation/${c.id}`); }}
-                          className="p-2 hover:bg-primary/10 rounded-xl transition-colors text-primary"
-                        >
-                          <ExternalLink className="h-4 w-4" />
+                        <button onClick={(e) => { e.stopPropagation(); navigate(`/consultation/${c.id}`); }}
+                          className="p-1.5 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground">
+                          <ExternalLink className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-2 hover:bg-destructive/10 rounded-xl transition-colors text-destructive/60 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <button onClick={(e) => e.stopPropagation()}
+                          className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>
@@ -146,45 +136,33 @@ export default function ConsultationList() {
         {/* Mobile cards */}
         <div className="md:hidden divide-y">
           {filtered.map((c) => {
-            const type = typeConfig[c.consultationType];
-            const status = statusConfig[c.status];
-            const TypeIcon = type.icon;
+            const t = typeStyle[c.consultationType];
+            const TypeIcon = t.icon;
             return (
-              <div key={c.id} className="p-4 hover:bg-muted/20 transition-colors" onClick={() => navigate(`/consultation/${c.id}`)}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-                      {c.clientName.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">{c.clientName}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{c.caseName}</p>
-                    </div>
+              <div key={c.id} className="p-4 hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => navigate(`/consultation/${c.id}`)}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">{c.clientName}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{c.caseName}</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${status.bg}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                    {status.label}
-                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${statusStyle[c.status]}`}>{statusLabel[c.status]}</span>
                 </div>
-                <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium ${type.color}`}>
-                    <TypeIcon className="h-3 w-3" /> {type.label}
+                <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${t.cls}`}>
+                    <TypeIcon className="h-3 w-3" /> {t.label}
                   </span>
+                  <span>•</span>
                   <span>{c.date}</span>
-                  <span>{c.lawType}</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t bg-muted/10 text-xs text-muted-foreground">
-          <span>Menampilkan {filtered.length} dari {consultations.length} data</span>
+        <div className="flex items-center justify-between px-4 py-3 border-t text-xs text-muted-foreground">
+          <span>Menampilkan {filtered.length} dari {consultations.length}</span>
           <div className="flex gap-1">
-            <button className="px-3 py-1.5 rounded-lg hover:bg-muted transition-colors font-medium" disabled>Sebelumnya</button>
-            <button className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold">1</button>
-            <button className="px-3 py-1.5 rounded-lg hover:bg-muted transition-colors font-medium" disabled>Selanjutnya</button>
+            <button className="px-2.5 py-1 rounded bg-primary text-primary-foreground font-semibold text-[11px]">1</button>
           </div>
         </div>
       </div>

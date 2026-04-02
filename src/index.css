@@ -2,63 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 20% 10%;
+    --background: 210 20% 96%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 160 55% 35%;
+    --primary: 158 50% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 95% 55%;
-    --secondary-foreground: 40 95% 15%;
+    --secondary: 40 90% 52%;
+    --secondary-foreground: 40 90% 12%;
 
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 215 18% 92%;
+    --muted-foreground: 215 12% 50%;
 
-    --accent: 160 30% 93%;
-    --accent-foreground: 160 55% 25%;
+    --accent: 158 25% 92%;
+    --accent-foreground: 158 50% 22%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 0 68% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 91%;
-    --input: 220 15% 91%;
-    --ring: 160 55% 35%;
+    --border: 215 18% 88%;
+    --input: 215 18% 88%;
+    --ring: 158 50% 32%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-bg: 160 50% 18%;
-    --sidebar-fg: 160 10% 90%;
-    --sidebar-accent: 160 40% 24%;
-    --sidebar-accent-fg: 0 0% 100%;
-    --sidebar-muted: 160 20% 60%;
-    --sidebar-border: 160 30% 22%;
-    --sidebar-highlight: 40 95% 55%;
+    --sidebar-background: 158 45% 18%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 40 90% 52%;
+    --sidebar-primary-foreground: 220 25% 12%;
+    --sidebar-accent: 158 35% 24%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 158 30% 22%;
+    --sidebar-ring: 40 90% 52%;
 
-    --sidebar-background: 160 50% 18%;
-    --sidebar-foreground: 160 10% 90%;
-    --sidebar-primary: 40 95% 55%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-ring: 40 95% 55%;
-
-    --success: 160 60% 40%;
-    --warning: 40 95% 55%;
-    --info: 215 90% 58%;
-
-    --chat-sent: 160 45% 25%;
-    --chat-sent-fg: 0 0% 100%;
-    --chat-received: 220 15% 95%;
-    --chat-received-fg: 220 20% 10%;
+    --success: 158 55% 38%;
+    --warning: 40 90% 52%;
+    --info: 215 85% 55%;
   }
 }
 
@@ -68,23 +55,6 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-}
-
-@layer utilities {
-  .glass {
-    @apply bg-card/70 backdrop-blur-xl border border-border/60;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-  }
-  .glass-elevated {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
-    box-shadow: 0 4px 24px -4px rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-  }
-  .sidebar-gradient {
-    background: linear-gradient(180deg, hsl(160 50% 20%), hsl(160 45% 14%));
-  }
-  .header-gradient {
-    background: linear-gradient(90deg, hsl(160 55% 30%), hsl(160 50% 35%));
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 }

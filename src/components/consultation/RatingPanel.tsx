@@ -14,49 +14,44 @@ export default function RatingPanel() {
   };
 
   const labels = ['Buruk', 'Kurang', 'Cukup', 'Baik', 'Luar Biasa'];
-  const emojis = ['😞', '😐', '🙂', '😊', '🤩'];
 
   return (
-    <div className="glass-elevated rounded-2xl overflow-hidden">
-      <div className="px-5 py-4 border-b bg-muted/20">
-        <h3 className="font-bold tracking-tight">Beri Rating</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">Bagikan pengalaman Anda</p>
+    <div className="bg-card rounded-lg border">
+      <div className="px-4 py-3 border-b">
+        <h3 className="font-bold text-sm">Beri Rating Pengacara</h3>
       </div>
-
-      <div className="p-5 space-y-5">
-        {/* Stars */}
-        <div className="flex items-center gap-2 justify-center py-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <button
-              key={i}
-              onClick={() => setRating(i)}
-              onMouseEnter={() => setHover(i)}
-              onMouseLeave={() => setHover(0)}
-              className="transition-all duration-150 hover:scale-125 active:scale-95"
-            >
-              <Star className={`h-8 w-8 transition-colors ${i <= (hover || rating) ? 'fill-secondary text-secondary' : 'text-border'}`} />
-            </button>
-          ))}
+      <div className="p-4 space-y-4">
+        <div>
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Rating</p>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <button
+                key={i}
+                onClick={() => setRating(i)}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(0)}
+                className="transition-transform hover:scale-110"
+              >
+                <Star className={`h-7 w-7 ${i <= (hover || rating) ? 'fill-secondary text-secondary' : 'text-muted'}`} />
+              </button>
+            ))}
+          </div>
+          {rating > 0 && <p className="text-xs font-medium text-muted-foreground mt-1.5">{labels[rating - 1]}</p>}
         </div>
 
-        {rating > 0 && (
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/60 justify-center animate-slide-in">
-            <span className="text-2xl">{emojis[rating - 1]}</span>
-            <span className="text-sm font-semibold text-accent-foreground">{labels[rating - 1]}</span>
-          </div>
-        )}
+        <div>
+          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Ulasan</p>
+          <textarea
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            placeholder="Tulis ulasan Anda..."
+            rows={3}
+            className="w-full rounded-md border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 resize-none transition"
+          />
+        </div>
 
-        {/* Review */}
-        <textarea
-          value={review}
-          onChange={(e) => setReview(e.target.value)}
-          placeholder="Tulis ulasan Anda..."
-          rows={3}
-          className="w-full rounded-xl bg-muted/40 border-0 p-3 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all"
-        />
-
-        <Button onClick={submit} className="w-full gap-2 h-11 rounded-xl font-semibold">
-          <Send className="h-4 w-4" /> Kirim Rating
+        <Button onClick={submit} className="w-full gap-2 h-9 font-semibold text-sm">
+          <Send className="h-3.5 w-3.5" /> Kirim Rating
         </Button>
       </div>
     </div>
