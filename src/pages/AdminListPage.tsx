@@ -47,19 +47,14 @@ export default function AdminListPage() {
     if (addForm.password.length < 6) { toast.error('Password minimal 6 karakter'); return; }
     setAdding(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: addForm.email,
-      password: addForm.password,
-      options: { data: { nama: addForm.nama } },
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await supabase.functions.invoke('create-user', {
+      body: { email: addForm.email, password: addForm.password, nama: addForm.nama, role: addForm.role },
     });
-    if (error) { toast.error(error.message); setAdding(false); return; }
-
-    if (data.user) {
-      await supabase.from('profiles').update({
-        nama: addForm.nama,
-        approval_status: 'approved',
-      }).eq('user_id', data.user.id);
-      await supabase.from('user_roles').update({ role: addForm.role as any }).eq('user_id', data.user.id);
+    if (res.error || res.data?.error) {
+      toast.error(res.data?.error || res.error?.message || 'Gagal membuat user');
+      setAdding(false);
+      return;
     }
 
     toast.success(`${addForm.role === 'superadmin' ? 'Super Admin' : 'Admin'} berhasil ditambahkan`);
