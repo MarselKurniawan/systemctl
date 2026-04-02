@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Star, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 export default function RatingPanel() {
@@ -10,19 +9,23 @@ export default function RatingPanel() {
   const [review, setReview] = useState('');
 
   const submit = () => {
-    if (rating === 0) { toast.error('Silakan pilih rating terlebih dahulu'); return; }
+    if (rating === 0) { toast.error('Pilih rating terlebih dahulu'); return; }
     toast.success('Rating berhasil dikirim!');
   };
 
-  const stickers = ['😞', '😐', '🙂', '😊', '🤩'];
+  const labels = ['Buruk', 'Kurang', 'Cukup', 'Baik', 'Luar Biasa'];
+  const emojis = ['😞', '😐', '🙂', '😊', '🤩'];
 
   return (
-    <div className="glass-card rounded-xl p-5 space-y-5">
-      <h3 className="font-bold text-lg tracking-tight">Beri Rating Pengacara</h3>
+    <div className="glass-elevated rounded-2xl overflow-hidden">
+      <div className="px-5 py-4 border-b bg-muted/20">
+        <h3 className="font-bold tracking-tight">Beri Rating</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Bagikan pengalaman Anda</p>
+      </div>
 
-      <div>
-        <p className="text-xs text-muted-foreground font-semibold mb-2 uppercase tracking-wider">Rating</p>
-        <div className="flex gap-1.5">
+      <div className="p-5 space-y-5">
+        {/* Stars */}
+        <div className="flex items-center gap-2 justify-center py-2">
           {[1, 2, 3, 4, 5].map((i) => (
             <button
               key={i}
@@ -31,35 +34,31 @@ export default function RatingPanel() {
               onMouseLeave={() => setHover(0)}
               className="transition-all duration-150 hover:scale-125 active:scale-95"
             >
-              <Star className={`h-8 w-8 ${i <= (hover || rating) ? 'fill-secondary text-secondary' : 'text-border'}`} />
+              <Star className={`h-8 w-8 transition-colors ${i <= (hover || rating) ? 'fill-secondary text-secondary' : 'text-border'}`} />
             </button>
           ))}
         </div>
-      </div>
 
-      {rating > 0 && (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/50">
-          <span className="text-3xl">{stickers[rating - 1]}</span>
-          <span className="text-sm font-medium text-accent-foreground">
-            {['Kurang', 'Cukup', 'Baik', 'Bagus', 'Luar Biasa'][rating - 1]}
-          </span>
-        </div>
-      )}
+        {rating > 0 && (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/60 justify-center animate-slide-in">
+            <span className="text-2xl">{emojis[rating - 1]}</span>
+            <span className="text-sm font-semibold text-accent-foreground">{labels[rating - 1]}</span>
+          </div>
+        )}
 
-      <div>
-        <p className="text-xs text-muted-foreground font-semibold mb-2 uppercase tracking-wider">Ulasan</p>
-        <Textarea
+        {/* Review */}
+        <textarea
           value={review}
           onChange={(e) => setReview(e.target.value)}
-          placeholder="Bagaimana pengalaman Anda?"
+          placeholder="Tulis ulasan Anda..."
           rows={3}
-          className="resize-none bg-muted/50 border-0"
+          className="w-full rounded-xl bg-muted/40 border-0 p-3 text-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all"
         />
-      </div>
 
-      <Button onClick={submit} className="w-full gap-2 font-semibold">
-        <Send className="h-4 w-4" /> Kirim Rating
-      </Button>
+        <Button onClick={submit} className="w-full gap-2 h-11 rounded-xl font-semibold">
+          <Send className="h-4 w-4" /> Kirim Rating
+        </Button>
+      </div>
     </div>
   );
 }
