@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      consultations: {
+        Row: {
+          agenda: string | null
+          case_name: string
+          client_name: string
+          client_user_id: string | null
+          consultation_type: Database["public"]["Enums"]["consultation_type"]
+          created_at: string
+          date: string
+          duration: number | null
+          end_photo: string | null
+          id: string
+          jenis_kelamin: string | null
+          law_type: string | null
+          lawyer_user_id: string | null
+          nik: string | null
+          penyandang_disabilitas: boolean | null
+          rating: number | null
+          review: string | null
+          service_type: string | null
+          start_photo: string | null
+          status: Database["public"]["Enums"]["consultation_status"]
+          tanggal_lahir: string | null
+          telp: string | null
+          updated_at: string
+        }
+        Insert: {
+          agenda?: string | null
+          case_name: string
+          client_name: string
+          client_user_id?: string | null
+          consultation_type?: Database["public"]["Enums"]["consultation_type"]
+          created_at?: string
+          date?: string
+          duration?: number | null
+          end_photo?: string | null
+          id?: string
+          jenis_kelamin?: string | null
+          law_type?: string | null
+          lawyer_user_id?: string | null
+          nik?: string | null
+          penyandang_disabilitas?: boolean | null
+          rating?: number | null
+          review?: string | null
+          service_type?: string | null
+          start_photo?: string | null
+          status?: Database["public"]["Enums"]["consultation_status"]
+          tanggal_lahir?: string | null
+          telp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agenda?: string | null
+          case_name?: string
+          client_name?: string
+          client_user_id?: string | null
+          consultation_type?: Database["public"]["Enums"]["consultation_type"]
+          created_at?: string
+          date?: string
+          duration?: number | null
+          end_photo?: string | null
+          id?: string
+          jenis_kelamin?: string | null
+          law_type?: string | null
+          lawyer_user_id?: string | null
+          nik?: string | null
+          penyandang_disabilitas?: boolean | null
+          rating?: number | null
+          review?: string | null
+          service_type?: string | null
+          start_photo?: string | null
+          status?: Database["public"]["Enums"]["consultation_status"]
+          tanggal_lahir?: string | null
+          telp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       master_jenis_hukum: {
         Row: {
           created_at: string
@@ -152,6 +230,8 @@ export type Database = {
     Enums: {
       app_role: "superadmin" | "admin" | "lawyer" | "client"
       approval_status: "pending" | "approved" | "rejected"
+      consultation_status: "pending" | "in_progress" | "completed"
+      consultation_type: "offline" | "chat" | "video_call"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -281,6 +361,8 @@ export const Constants = {
     Enums: {
       app_role: ["superadmin", "admin", "lawyer", "client"],
       approval_status: ["pending", "approved", "rejected"],
+      consultation_status: ["pending", "in_progress", "completed"],
+      consultation_type: ["offline", "chat", "video_call"],
     },
   },
 } as const
