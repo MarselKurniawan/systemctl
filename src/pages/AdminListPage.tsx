@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Plus, Shield, Mail, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import OnlineBadge from '@/components/shared/OnlineBadge';
 
 export default function AdminListPage() {
   const { role } = useAuth();
