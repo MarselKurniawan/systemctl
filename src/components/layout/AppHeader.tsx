@@ -97,6 +97,9 @@ export default function AppHeader({ onMenuClick }: AppHeaderProps) {
               <p className="text-sm font-semibold">{profile?.nama || 'User'}</p>
               <p className="text-xs text-muted-foreground">{roleLabel[role || 'client'] || role}</p>
             </div>
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <User className="h-4 w-4 mr-2" /> Profil Saya
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
               <LogOut className="h-4 w-4 mr-2" /> Keluar
             </DropdownMenuItem>

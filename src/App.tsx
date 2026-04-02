@@ -15,6 +15,7 @@ import LawyerListPage from "./pages/LawyerListPage";
 import AdminListPage from "./pages/AdminListPage";
 import MasterDataPage from "./pages/MasterDataPage";
 import NotFound from "./pages/NotFound";
+import ProfilePage from "./pages/ProfilePage";
 import { Scale, Briefcase } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/users/client" element={<ClientListPage />} />
               <Route path="/users/lawyer" element={<LawyerListPage />} />
               <Route path="/users/admin" element={<AdminListPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
