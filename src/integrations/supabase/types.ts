@@ -195,6 +195,7 @@ export type Database = {
           nik: string | null
           nomor_wa: string | null
           penyandang_disabilitas: boolean | null
+          rejection_reason: string | null
           tanggal_lahir: string | null
           updated_at: string
           user_id: string
@@ -212,6 +213,7 @@ export type Database = {
           nik?: string | null
           nomor_wa?: string | null
           penyandang_disabilitas?: boolean | null
+          rejection_reason?: string | null
           tanggal_lahir?: string | null
           updated_at?: string
           user_id: string
@@ -229,6 +231,7 @@ export type Database = {
           nik?: string | null
           nomor_wa?: string | null
           penyandang_disabilitas?: boolean | null
+          rejection_reason?: string | null
           tanggal_lahir?: string | null
           updated_at?: string
           user_id?: string
