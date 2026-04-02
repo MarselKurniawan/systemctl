@@ -65,6 +65,7 @@ export type Database = {
           email: string | null
           id: string
           jenis_kelamin: string | null
+          last_seen_at: string | null
           nama: string
           nik: string | null
           nomor_wa: string | null
@@ -81,6 +82,7 @@ export type Database = {
           email?: string | null
           id?: string
           jenis_kelamin?: string | null
+          last_seen_at?: string | null
           nama?: string
           nik?: string | null
           nomor_wa?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           email?: string | null
           id?: string
           jenis_kelamin?: string | null
+          last_seen_at?: string | null
           nama?: string
           nik?: string | null
           nomor_wa?: string | null
