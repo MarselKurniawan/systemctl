@@ -37,14 +37,25 @@ function mapRow(row: any): Consultation {
 export function useConsultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user, role } = useAuth();
 
   const fetchConsultations = useCallback(async () => {
     setLoading(true);
-    // Fetch consultations with lawyer name via a join-like approach
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('consultations')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Role-based filtering
+    if (role === 'lawyer' && user) {
+      query = query.eq('lawyer_user_id', user.id);
+    } else if (role === 'client' && user) {
+      query = query.eq('client_user_id', user.id);
+    }
+    // superadmin & admin see all
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching consultations:', error);
@@ -76,7 +87,7 @@ export function useConsultations() {
       setConsultations([]);
     }
     setLoading(false);
-  }, []);
+  }, [user, role]);
 
   useEffect(() => {
     fetchConsultations();
