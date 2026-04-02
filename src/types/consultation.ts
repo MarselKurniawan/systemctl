@@ -15,7 +15,9 @@ export interface Consultation {
   status: ConsultationStatus;
   agenda: string;
   lawyerName?: string;
-  duration?: string;
+  duration?: number; // in minutes
+  startPhoto?: string;
+  endPhoto?: string;
 }
 
 export interface ChatMessage {
