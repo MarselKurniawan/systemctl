@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Search, CheckCircle } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -29,6 +30,8 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
   const [jenisHukumOptions, setJenisHukumOptions] = useState<{ id: string; nama: string }[]>([]);
   const [lawyerOptions, setLawyerOptions] = useState<LawyerOption[]>([]);
   const [handleSelf, setHandleSelf] = useState(false);
+  const [nikFound, setNikFound] = useState(false);
+  const [nikSearching, setNikSearching] = useState(false);
 
   const [form, setForm] = useState({
     namaPengguna: '',
@@ -46,11 +49,41 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
     pilihLawyer: 'auto',
   });
 
-  const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
+  const update = (field: string, value: string) => {
+    setForm((p) => ({ ...p, [field]: value }));
+    if (field === 'nik') setNikFound(false);
+  };
+
+  // NIK lookup
+  const lookupNik = async () => {
+    if (form.nik.length !== 16) return;
+    setNikSearching(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('nama, nik, nomor_wa, tanggal_lahir, jenis_kelamin, penyandang_disabilitas')
+      .eq('nik', form.nik)
+      .limit(1);
+    
+    if (data && data.length > 0) {
+      const p = data[0];
+      setForm(prev => ({
+        ...prev,
+        namaPengguna: p.nama || prev.namaPengguna,
+        telp: p.nomor_wa || prev.telp,
+        tanggalLahir: p.tanggal_lahir || prev.tanggalLahir,
+        jenisKelamin: p.jenis_kelamin || prev.jenisKelamin,
+        penyandangDisabilitas: p.penyandang_disabilitas ? 'Ya' : 'Tidak',
+      }));
+      setNikFound(true);
+      toast({ title: 'Data ditemukan', description: `Data ${p.nama} berhasil dimuat dari NIK` });
+    }
+    setNikSearching(false);
+  };
 
   // Fetch master data & lawyers
   useEffect(() => {
     if (!open) return;
+    setNikFound(false);
     const fetchData = async () => {
       const [layananRes, hukumRes, rolesRes] = await Promise.all([
         supabase.from('master_jenis_layanan').select('id, nama').order('nama'),
@@ -65,7 +98,6 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
       if (layanan.length > 0 && !form.jenisLayanan) setForm(p => ({ ...p, jenisLayanan: layanan[0].nama }));
       if (hukum.length > 0 && !form.jenisHukum) setForm(p => ({ ...p, jenisHukum: hukum[0].nama }));
 
-      // Fetch lawyer profiles with online status
       if (rolesRes.data && rolesRes.data.length > 0) {
         const lawyerIds = rolesRes.data.map(r => r.user_id);
         const { data: profiles } = await supabase.from('profiles').select('user_id, nama, last_seen_at').in('user_id', lawyerIds).eq('approval_status', 'approved');
@@ -81,12 +113,10 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
     fetchData();
   }, [open]);
 
-  // Client cannot create offline consultations
   const consultationTypes = role === 'client'
     ? [{ value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }]
     : [{ value: 'offline', label: 'Offline' }, { value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }];
 
-  // Lawyer always handles their own consultation
   const isLawyer = role === 'lawyer';
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const isClient = role === 'client';
@@ -116,12 +146,10 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
       } else if (form.pilihLawyer !== 'auto') {
         lawyerUserId = form.pilihLawyer;
       } else {
-        // Auto: pick first available online lawyer
         const available = lawyerOptions.find(l => l.isOnline && !l.isOnConsultation);
         lawyerUserId = available?.user_id || null;
       }
     } else {
-      // Client: auto-assign
       const available = lawyerOptions.find(l => l.isOnline && !l.isOnConsultation);
       lawyerUserId = available?.user_id || null;
     }
@@ -165,22 +193,27 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
           <DialogTitle className="text-center text-lg font-bold">Buat Konsultasi Baru</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-4 space-y-5">
-          {/* Row 1 */}
+        <form onSubmit={handleSubmit} className="px-4 sm:px-6 pb-4 sm:pb-6 pt-4 space-y-4 sm:space-y-5">
+          {/* Row 1 - NIK with lookup */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">NIK (16 digit)</Label>
+              <div className="flex gap-2">
+                <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} className="flex-1" />
+                <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={lookupNik} disabled={form.nik.length !== 16 || nikSearching}>
+                  {nikFound ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+              {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
+              {nikFound && <p className="text-xs text-emerald-600 font-medium">✓ Data ditemukan & dimuat</p>}
+            </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Nama Pengguna</Label>
               <Input value={form.namaPengguna} onChange={(e) => update('namaPengguna', e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">NIK (16 digit)</Label>
-              <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} />
-              {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
-              {form.nik.length === 16 && <p className="text-xs text-emerald-600">✓ 16 digit</p>}
             </div>
           </div>
 
@@ -239,7 +272,7 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
             </div>
           </div>
 
-          {/* Row 5 - Master data from DB */}
+          {/* Row 5 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Jenis Layanan</Label>
@@ -285,7 +318,7 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
             </div>
           </div>
 
-          {/* Row 7 - Lawyer picker (role-based) */}
+          {/* Lawyer picker */}
           {isLawyer ? (
             <div className="bg-muted/50 rounded-lg p-3 border">
               <p className="text-sm font-semibold text-foreground">Lawyer yang menangani</p>
@@ -301,7 +334,6 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
                     <span key={l.user_id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-background border text-xs">
                       <span className={`h-1.5 w-1.5 rounded-full ${l.isOnConsultation ? 'bg-amber-400' : 'bg-emerald-500'}`} />
                       {l.nama}
-                      {l.isOnConsultation && <span className="text-[10px] text-amber-600">(On Consultation)</span>}
                     </span>
                   ))
                 ) : (
@@ -310,14 +342,9 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
               </div>
             </div>
           ) : (
-            /* Admin / Superadmin */
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <Checkbox
-                  id="handleSelf"
-                  checked={handleSelf}
-                  onCheckedChange={(v) => setHandleSelf(!!v)}
-                />
+                <Checkbox id="handleSelf" checked={handleSelf} onCheckedChange={(v) => setHandleSelf(!!v)} />
                 <label htmlFor="handleSelf" className="text-sm font-semibold cursor-pointer">Saya sendiri yang menangani</label>
               </div>
               {!handleSelf && (
@@ -328,15 +355,11 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
                     <SelectContent>
                       <SelectItem value="auto">🔄 Pilih Lawyer Otomatis</SelectItem>
                       {lawyerOptions.map((l) => (
-                        <SelectItem
-                          key={l.user_id}
-                          value={l.user_id}
-                          disabled={l.isOnConsultation}
-                        >
+                        <SelectItem key={l.user_id} value={l.user_id} disabled={l.isOnConsultation}>
                           <span className="flex items-center gap-2">
                             <span className={`h-1.5 w-1.5 rounded-full ${l.isOnConsultation ? 'bg-amber-400' : l.isOnline ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
                             {l.nama}
-                            {l.isOnConsultation && <span className="text-[10px] text-amber-600 ml-1">(On Consultation)</span>}
+                            {l.isOnConsultation && <span className="text-[10px] text-amber-600 ml-1">(Busy)</span>}
                             {!l.isOnline && !l.isOnConsultation && <span className="text-[10px] text-muted-foreground ml-1">(Offline)</span>}
                           </span>
                         </SelectItem>
