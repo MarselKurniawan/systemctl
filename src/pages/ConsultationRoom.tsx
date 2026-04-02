@@ -225,15 +225,15 @@ export default function ConsultationRoom() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Left: main area */}
         <div className="lg:col-span-3 space-y-5">
-          <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
+          <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '360px' }}>
             {isVideo && started && !ended ? (
               <JitsiRoom roomName={jitsiRoomName} displayName={displayName} onClose={handleEndVideo} />
             ) : (isChat) && chatOpen ? (
-              <div className="h-[460px] flex flex-col">
+              <div className="h-[360px] sm:h-[460px] flex flex-col">
                 <ChatRoom consultationId={id!} clientName={consultation.clientName} disabled={ended} onFileShared={handleFileShared} />
               </div>
             ) : isOffline && started ? (
-              <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
+              <div className="h-[360px] sm:h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
                 <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Camera className="h-7 w-7 text-primary/50" />
                 </div>
