@@ -12,7 +12,7 @@ import CameraModal from '@/components/consultation/CameraModal';
 import ClientDetailCard from '@/components/consultation/ClientDetailCard';
 import FileListCard from '@/components/consultation/FileListCard';
 import PhotoModal from '@/components/consultation/PhotoModal';
-import JitsiRoom from '@/components/consultation/JitsiRoom';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
