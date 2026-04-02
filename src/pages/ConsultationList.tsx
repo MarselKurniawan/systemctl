@@ -40,6 +40,7 @@ export default function ConsultationList() {
   ];
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -170,7 +171,7 @@ export default function ConsultationList() {
       </div>
     </div>
 
-      <CreateConsultationModal open={showCreate} onClose={() => setShowCreate(false)} />
-    </div>
+    <CreateConsultationModal open={showCreate} onClose={() => setShowCreate(false)} />
+    </>
   );
 }
