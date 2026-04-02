@@ -49,10 +49,20 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
+    // Pass all profile data as user_metadata so the trigger saves it
+    const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { data: { nama: form.nama } },
+      options: {
+        data: {
+          nama: form.nama,
+          nik: form.nik,
+          nomor_wa: form.nomorWa || null,
+          tanggal_lahir: form.tanggalLahir || null,
+          jenis_kelamin: form.jenisKelamin,
+          penyandang_disabilitas: form.penyandangDisabilitas === 'true',
+        },
+      },
     });
 
     if (error) {
@@ -61,16 +71,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (data.user) {
-      await supabase.from('profiles').update({
-        nama: form.nama,
-        nik: form.nik,
-        nomor_wa: form.nomorWa || null,
-        tanggal_lahir: form.tanggalLahir || null,
-        jenis_kelamin: form.jenisKelamin,
-        penyandang_disabilitas: form.penyandangDisabilitas === 'true',
-      }).eq('user_id', data.user.id);
-    }
+    // Sign out immediately so the new user doesn't stay logged in
+    await supabase.auth.signOut();
 
     setLoading(false);
     toast.success('Registrasi berhasil! Akun Anda menunggu persetujuan admin.');

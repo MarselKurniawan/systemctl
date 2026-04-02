@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          consultation_id: string
+          created_at: string
+          file_name: string | null
+          file_size: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          message: string
+          sender_name: string
+          sender_user_id: string
+        }
+        Insert: {
+          consultation_id: string
+          created_at?: string
+          file_name?: string | null
+          file_size?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message?: string
+          sender_name: string
+          sender_user_id: string
+        }
+        Update: {
+          consultation_id?: string
+          created_at?: string
+          file_name?: string | null
+          file_size?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          message?: string
+          sender_name?: string
+          sender_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           agenda: string | null

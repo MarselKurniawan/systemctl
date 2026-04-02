@@ -10,7 +10,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Verify caller is admin/superadmin
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401 });
@@ -22,10 +21,10 @@ Deno.serve(async (req) => {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Verify caller role
+  // Verify caller role using service role to avoid RLS issues
   const callerClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } }, auth: { autoRefreshToken: false, persistSession: false } }
   );
   const { data: { user: caller } } = await callerClient.auth.getUser();
@@ -38,14 +37,13 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
   }
 
-  // Admin can only create lawyer/client, superadmin can create any role
-  const { email, password, nama, nomor_wa, role } = await req.json();
+  const { email, password, nama, nomor_wa, role, nik, tanggal_lahir, jenis_kelamin, penyandang_disabilitas } = await req.json();
 
   if (callerRole.role === "admin" && ["admin", "superadmin"].includes(role)) {
     return new Response(JSON.stringify({ error: "Admin cannot create admin/superadmin" }), { status: 403 });
   }
 
-  // Create user with admin API (does NOT affect caller's session)
+  // Create user with admin API
   const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
@@ -59,12 +57,18 @@ Deno.serve(async (req) => {
 
   const userId = userData.user.id;
 
-  // Update profile (trigger already created it with defaults)
-  await supabaseAdmin.from("profiles").update({
+  // Update profile
+  const profileUpdate: Record<string, any> = {
     nama,
     nomor_wa: nomor_wa || null,
     approval_status: "approved",
-  }).eq("user_id", userId);
+  };
+  if (nik) profileUpdate.nik = nik;
+  if (tanggal_lahir) profileUpdate.tanggal_lahir = tanggal_lahir;
+  if (jenis_kelamin) profileUpdate.jenis_kelamin = jenis_kelamin;
+  if (penyandang_disabilitas !== undefined) profileUpdate.penyandang_disabilitas = penyandang_disabilitas;
+
+  await supabaseAdmin.from("profiles").update(profileUpdate).eq("user_id", userId);
 
   // Update role from default 'client' to desired role
   await supabaseAdmin.from("user_roles").update({ role }).eq("user_id", userId);

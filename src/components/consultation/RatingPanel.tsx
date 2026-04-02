@@ -3,28 +3,44 @@ import { Star, Send, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   clientName?: string;
+  consultationId?: string;
   existingRating?: number;
   existingReview?: string;
 }
 
-export default function RatingPanel({ clientName, existingRating, existingReview }: Props) {
+export default function RatingPanel({ clientName, consultationId, existingRating, existingReview }: Props) {
   const { role } = useAuth();
   const [rating, setRating] = useState(existingRating || 0);
   const [hover, setHover] = useState(0);
   const [review, setReview] = useState(existingReview || '');
   const [editing, setEditing] = useState(!existingRating);
+  const [saving, setSaving] = useState(false);
 
   const canRate = role === 'client' || role === 'admin' || role === 'superadmin';
   const canEdit = role === 'admin' || role === 'superadmin';
   const isViewOnly = !canRate;
 
-  const submit = () => {
+  const submit = async () => {
     if (rating === 0) { toast.error('Pilih rating terlebih dahulu'); return; }
-    toast.success('Rating berhasil dikirim!');
-    setEditing(false);
+    if (!consultationId) { toast.success('Rating berhasil dikirim!'); setEditing(false); return; }
+    
+    setSaving(true);
+    const { error } = await supabase.from('consultations').update({
+      rating,
+      review: review || null,
+    }).eq('id', consultationId);
+    setSaving(false);
+
+    if (error) {
+      toast.error('Gagal menyimpan rating: ' + error.message);
+    } else {
+      toast.success('Rating berhasil dikirim!');
+      setEditing(false);
+    }
   };
 
   const labels = ['Buruk', 'Kurang', 'Cukup', 'Baik', 'Luar Biasa'];
@@ -40,7 +56,6 @@ export default function RatingPanel({ clientName, existingRating, existingReview
         )}
       </div>
       <div className="p-4 space-y-4">
-        {/* Info: admin/superadmin rating on behalf of client */}
         {(role === 'admin' || role === 'superadmin') && clientName && (
           <p className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-md border">
             Rating atas nama: <strong className="text-foreground">{clientName}</strong>
@@ -79,8 +94,8 @@ export default function RatingPanel({ clientName, existingRating, existingReview
         </div>
 
         {editing && canRate && (
-          <Button onClick={submit} className="w-full gap-2 h-9 font-semibold text-sm">
-            <Send className="h-3.5 w-3.5" /> Kirim Rating
+          <Button onClick={submit} className="w-full gap-2 h-9 font-semibold text-sm" disabled={saving}>
+            <Send className="h-3.5 w-3.5" /> {saving ? 'Menyimpan...' : 'Kirim Rating'}
           </Button>
         )}
 

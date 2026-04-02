@@ -1,40 +1,100 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Paperclip, FileIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChatMessage, ChatFile } from '@/types/consultation';
-import { mockMessages } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
+  consultationId: string;
   clientName: string;
   disabled?: boolean;
   onFileShared?: (file: ChatFile) => void;
 }
 
-export default function ChatRoom({ clientName, disabled, onFileShared }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
+export default function ChatRoom({ consultationId, clientName, disabled, onFileShared }: Props) {
+  const { user, profile } = useAuth();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const senderName = profile?.nama || 'User';
+
+  // Fetch existing messages
+  const fetchMessages = useCallback(async () => {
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('consultation_id', consultationId)
+      .order('created_at', { ascending: true });
+
+    if (data) {
+      const mapped: ChatMessage[] = data.map((m: any) => ({
+        id: m.id,
+        sender: m.sender_name,
+        message: m.message,
+        time: new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        isUser: m.sender_user_id === user?.id,
+        file: m.file_url ? { name: m.file_name || '', size: m.file_size || '', url: m.file_url, type: m.file_type || '' } : undefined,
+      }));
+      setMessages(mapped);
+    }
+    setLoading(false);
+  }, [consultationId, user?.id]);
+
+  useEffect(() => {
+    fetchMessages();
+
+    // Subscribe to realtime
+    const channel = supabase
+      .channel(`chat-${consultationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `consultation_id=eq.${consultationId}`,
+      }, (payload: any) => {
+        const m = payload.new;
+        const newMsg: ChatMessage = {
+          id: m.id,
+          sender: m.sender_name,
+          message: m.message,
+          time: new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          isUser: m.sender_user_id === user?.id,
+          file: m.file_url ? { name: m.file_name || '', size: m.file_size || '', url: m.file_url, type: m.file_type || '' } : undefined,
+        };
+        setMessages(prev => {
+          if (prev.some(p => p.id === m.id)) return prev;
+          return [...prev, newMsg];
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [consultationId, user?.id, fetchMessages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
-    if (!input.trim() || disabled) return;
-    setMessages([...messages, {
-      id: String(messages.length + 1),
-      sender: 'Konsultan',
-      message: input.trim(),
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      isUser: true,
-    }]);
+  const sendMessage = async () => {
+    if (!input.trim() || disabled || !user) return;
+    const text = input.trim();
     setInput('');
+
+    await supabase.from('chat_messages').insert({
+      consultation_id: consultationId,
+      sender_user_id: user.id,
+      sender_name: senderName,
+      message: text,
+    });
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || disabled) return;
+    if (!file || disabled || !user) return;
 
     const formatSize = (bytes: number) => {
       if (bytes < 1024) return `${bytes} B`;
@@ -42,23 +102,39 @@ export default function ChatRoom({ clientName, disabled, onFileShared }: Props) 
       return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     };
 
+    // Upload to storage
+    const filePath = `chat/${consultationId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('consultation-files')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      e.target.value = '';
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from('consultation-files').getPublicUrl(filePath);
+    const fileUrl = urlData.publicUrl;
+
     const chatFile: ChatFile = {
       name: file.name,
       size: formatSize(file.size),
-      url: URL.createObjectURL(file),
+      url: fileUrl,
       type: file.type,
     };
 
-    const newMsg: ChatMessage = {
-      id: String(messages.length + 1),
-      sender: 'Konsultan',
+    await supabase.from('chat_messages').insert({
+      consultation_id: consultationId,
+      sender_user_id: user.id,
+      sender_name: senderName,
       message: `📎 ${file.name}`,
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      isUser: true,
-      file: chatFile,
-    };
+      file_url: fileUrl,
+      file_name: file.name,
+      file_size: formatSize(file.size),
+      file_type: file.type,
+    });
 
-    setMessages(prev => [...prev, newMsg]);
     onFileShared?.(chatFile);
     e.target.value = '';
   };
@@ -74,6 +150,7 @@ export default function ChatRoom({ clientName, disabled, onFileShared }: Props) 
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {loading && <p className="text-center text-xs text-muted-foreground">Memuat pesan...</p>}
         {messages.map((msg) => (
           <div key={msg.id} className={`flex flex-col ${msg.isUser ? 'items-end' : 'items-start'}`}>
             <span className="text-[10px] text-muted-foreground mb-0.5">{msg.sender} · {msg.time}</span>
@@ -83,7 +160,7 @@ export default function ChatRoom({ clientName, disabled, onFileShared }: Props) 
                 : 'bg-primary text-primary-foreground rounded-bl-sm'
             }`}>
               {msg.file ? (
-                <a href={msg.file.url} download={msg.file.name} className="flex items-center gap-2 hover:opacity-80 transition">
+                <a href={msg.file.url} target="_blank" rel="noopener noreferrer" download={msg.file.name} className="flex items-center gap-2 hover:opacity-80 transition">
                   <FileIcon className="h-4 w-4 shrink-0" />
                   <div className="min-w-0">
                     <p className="font-medium truncate text-xs">{msg.file.name}</p>
@@ -101,7 +178,6 @@ export default function ChatRoom({ clientName, disabled, onFileShared }: Props) 
       </div>
 
       <div className="p-3 border-t flex gap-2">
-        <input type="hidden" />
         <input
           ref={fileInputRef}
           type="file"

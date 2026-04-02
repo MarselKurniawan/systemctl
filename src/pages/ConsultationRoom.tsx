@@ -11,7 +11,10 @@ import RatingPanel from '@/components/consultation/RatingPanel';
 import CameraModal from '@/components/consultation/CameraModal';
 import ClientDetailCard from '@/components/consultation/ClientDetailCard';
 import FileListCard from '@/components/consultation/FileListCard';
+import PhotoModal from '@/components/consultation/PhotoModal';
+import JitsiRoom from '@/components/consultation/JitsiRoom';
 import { ChatFile } from '@/types/consultation';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const statusStyle: Record<string, string> = {
@@ -19,13 +22,13 @@ const statusStyle: Record<string, string> = {
   in_progress: 'bg-blue-100 text-blue-800',
   completed: 'bg-emerald-100 text-emerald-800',
 };
-const statusLabel: Record<string, string> = { pending: 'Pending', in_progress: 'In Progress', completed: 'Completed' };
+const statusLabel: Record<string, string> = { pending: 'Belum Mulai', in_progress: 'Sedang Berlangsung', completed: 'Selesai' };
 const typeLabel: Record<string, string> = { chat: 'Chat Online', offline: 'Offline', video_call: 'Video Call' };
 
 export default function ConsultationRoom() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const { role } = useAuth();
+  const { role, profile } = useAuth();
   const { consultation, loading: consultationLoading, updateConsultation } = useConsultation(id);
   const timer = useTimer();
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -38,32 +41,55 @@ export default function ConsultationRoom() {
   const [sharedFiles, setSharedFiles] = useState<ChatFile[]>([]);
   const [autoStartDone, setAutoStartDone] = useState(false);
 
-  // Superadmin edit state
-  const isSuperadmin = role === 'superadmin';
+  // Photo modal state
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [photoModalUrl, setPhotoModalUrl] = useState('');
+  const [photoModalTitle, setPhotoModalTitle] = useState('');
+
+  // Superadmin/admin edit state
+  const canEdit = role === 'superadmin' || role === 'admin';
   const [editingDuration, setEditingDuration] = useState(false);
   const [editDurationValue, setEditDurationValue] = useState('0');
 
-  // Sync edit duration value when consultation loads
+  // Sync state from consultation data
   useEffect(() => {
-    if (consultation?.duration) setEditDurationValue(consultation.duration.toString());
-  }, [consultation?.duration]);
+    if (consultation) {
+      if (consultation.duration) setEditDurationValue(consultation.duration.toString());
+      if (consultation.startPhoto) setStartPhoto(consultation.startPhoto);
+      if (consultation.endPhoto) setEndPhoto(consultation.endPhoto);
+      if (consultation.status === 'in_progress') {
+        setStarted(true);
+        if (!timer.isRunning) timer.start();
+      }
+      if (consultation.status === 'completed') {
+        setStarted(true);
+        setEnded(true);
+      }
+    }
+  }, [consultation]);
 
   // Auto-start for lawyer offline consultation
   const autoStart = searchParams.get('autostart') === 'true';
   useEffect(() => {
     if (autoStart && !autoStartDone && consultation) {
-      const isOffline = consultation.consultationType === 'offline' || id?.startsWith('new-');
+      const isOffline = consultation.consultationType === 'offline';
       if (isOffline) {
         setCameraMode('start');
         setCameraOpen(true);
         setAutoStartDone(true);
       }
     }
-  }, [autoStart, autoStartDone, consultation, id]);
+  }, [autoStart, autoStartDone, consultation]);
 
   const handleFileShared = useCallback((file: ChatFile) => {
     setSharedFiles(prev => [...prev, file]);
   }, []);
+
+  const openPhotoModal = (url: string, title: string) => {
+    setPhotoModalUrl(url);
+    setPhotoModalTitle(title);
+    setPhotoModalOpen(true);
+  };
 
   if (consultationLoading) {
     return (
@@ -74,117 +100,6 @@ export default function ConsultationRoom() {
   }
 
   if (!consultation) {
-    // For new consultations (from auto-redirect), show a placeholder
-    if (id?.startsWith('new-')) {
-      return (
-        <div className="space-y-5">
-          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Link to="/" className="hover:text-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Home</Link>
-            <ChevronRight className="h-3 w-3 opacity-40" />
-            <span className="text-foreground font-medium">Konsultasi Baru</span>
-          </nav>
-
-          <div className="bg-card rounded-lg border p-4 flex items-center gap-3">
-            <Link to="/"><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
-            <div>
-              <h1 className="text-lg font-bold">Ruang Konsultasi</h1>
-              <p className="text-xs text-muted-foreground">Konsultasi baru</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-            <div className="lg:col-span-3">
-              <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
-                {started ? (
-                  <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
-                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Camera className="h-7 w-7 text-primary/50" />
-                    </div>
-                    {ended ? (
-                      <div className="text-center">
-                        <p className="font-semibold text-emerald-600">✓ Konsultasi Selesai</p>
-                        <p className="text-xs text-muted-foreground mt-1">Sesi telah berakhir</p>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <p className="text-sm font-semibold">Konsultasi Offline Berlangsung</p>
-                        <p className="text-xs text-muted-foreground mt-1">Sesi sedang berjalan</p>
-                        <div className="flex items-center gap-2 mt-3 px-3 py-1.5 bg-muted rounded-md">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          <span className="font-mono text-sm font-bold text-primary">{timer.formatted}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-[460px] flex flex-col items-center justify-center p-8">
-                    <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center mb-3">
-                      <Camera className="h-6 w-6 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-sm font-medium text-muted-foreground">Mempersiapkan konsultasi...</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Bukti photos */}
-              {(startPhoto || endPhoto) && (
-                <div className="bg-card rounded-lg border mt-5">
-                  <div className="px-4 py-3 border-b flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4 text-primary" />
-                    <h3 className="font-bold text-sm">Bukti Konsultasi</h3>
-                  </div>
-                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {startPhoto && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Foto Mulai</p>
-                        <img src={startPhoto} alt="Bukti mulai" className="w-full rounded-lg border object-cover max-h-48" />
-                      </div>
-                    )}
-                    {endPhoto && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Foto Selesai</p>
-                        <img src={endPhoto} alt="Bukti selesai" className="w-full rounded-lg border object-cover max-h-48" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-2 space-y-5">
-              <FileListCard files={sharedFiles} />
-              {ended && <RatingPanel />}
-            </div>
-          </div>
-
-          {/* Top bar actions */}
-          <div className="fixed bottom-6 right-6 flex gap-2 z-50">
-            {!started && (
-              <Button onClick={() => { setCameraMode('start'); setCameraOpen(true); }} className="gap-2 h-10 shadow-lg">
-                <Camera className="h-4 w-4" /> Mulai Konsultasi
-              </Button>
-            )}
-            {started && !ended && (
-              <Button variant="destructive" onClick={() => { setCameraMode('end'); setCameraOpen(true); }} className="gap-2 h-10 shadow-lg">
-                <StopCircle className="h-4 w-4" /> Akhiri
-              </Button>
-            )}
-          </div>
-
-          <CameraModal
-            open={cameraOpen}
-            onClose={() => setCameraOpen(false)}
-            onCapture={(imageData) => {
-              if (cameraMode === 'start') { setStartPhoto(imageData); setStarted(true); timer.start(); }
-              else if (cameraMode === 'end') { setEndPhoto(imageData); setEnded(true); timer.stop(); }
-            }}
-            title={cameraMode === 'start' ? 'Foto Mulai Konsultasi' : 'Foto Akhiri Konsultasi'}
-          />
-        </div>
-      );
-    }
-
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-bold text-lg mb-2">Konsultasi tidak ditemukan</p>
@@ -198,30 +113,50 @@ export default function ConsultationRoom() {
   const isVideo = consultation.consultationType === 'video_call';
   const showRating = ended || consultation.status === 'completed';
 
+  // Upload photo to storage
+  const uploadPhoto = async (imageData: string, prefix: string): Promise<string> => {
+    // Convert base64 to blob
+    const res = await fetch(imageData);
+    const blob = await res.blob();
+    const filePath = `photos/${id}/${prefix}_${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from('consultation-files').upload(filePath, blob, { contentType: 'image/jpeg' });
+    if (error) {
+      console.error('Photo upload error:', error);
+      return imageData; // fallback to base64
+    }
+    const { data: urlData } = supabase.storage.from('consultation-files').getPublicUrl(filePath);
+    return urlData.publicUrl;
+  };
+
   const handleStartOffline = () => { setCameraMode('start'); setCameraOpen(true); };
   const handleEndOffline = () => { setCameraMode('end'); setCameraOpen(true); };
   const handleCameraCapture = async (imageData: string) => {
     if (cameraMode === 'start') {
-      setStartPhoto(imageData);
+      const url = await uploadPhoto(imageData, 'start');
+      setStartPhoto(url);
       setStarted(true);
       timer.start();
-      await updateConsultation({ start_photo: imageData, status: 'in_progress' });
+      await updateConsultation({ start_photo: url, status: 'in_progress' });
     } else if (cameraMode === 'end') {
-      setEndPhoto(imageData);
+      const url = await uploadPhoto(imageData, 'end');
+      setEndPhoto(url);
       setEnded(true);
       timer.stop();
       const durationMins = Math.floor(timer.seconds / 60);
-      await updateConsultation({ end_photo: imageData, status: 'completed', duration: durationMins });
+      await updateConsultation({ end_photo: url, status: 'completed', duration: durationMins });
     } else if (cameraMode === 'edit_start') {
-      setStartPhoto(imageData);
-      await updateConsultation({ start_photo: imageData });
+      const url = await uploadPhoto(imageData, 'start_edit');
+      setStartPhoto(url);
+      await updateConsultation({ start_photo: url });
       toast.success('Foto mulai berhasil diperbarui');
     } else if (cameraMode === 'edit_end') {
-      setEndPhoto(imageData);
-      await updateConsultation({ end_photo: imageData });
+      const url = await uploadPhoto(imageData, 'end_edit');
+      setEndPhoto(url);
+      await updateConsultation({ end_photo: url });
       toast.success('Foto selesai berhasil diperbarui');
     }
   };
+
   const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress' }); };
   const handleEndChat = () => {
     setChatOpen(false); setEnded(true); timer.stop();
@@ -244,6 +179,10 @@ export default function ConsultationRoom() {
   };
 
   const handleEditPhoto = (mode: 'edit_start' | 'edit_end') => { setCameraMode(mode); setCameraOpen(true); };
+
+  // Jitsi room name based on consultation id
+  const jitsiRoomName = `consultation_${id?.replace(/-/g, '_')}`;
+  const displayName = profile?.nama || 'User';
 
   return (
     <div className="space-y-5">
@@ -287,9 +226,11 @@ export default function ConsultationRoom() {
         {/* Left: main area */}
         <div className="lg:col-span-3 space-y-5">
           <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
-            {(isChat || isVideo) && chatOpen ? (
+            {isVideo && started && !ended ? (
+              <JitsiRoom roomName={jitsiRoomName} displayName={displayName} onClose={handleEndVideo} />
+            ) : (isChat) && chatOpen ? (
               <div className="h-[460px] flex flex-col">
-                <ChatRoom clientName={consultation.clientName} disabled={ended} onFileShared={handleFileShared} />
+                <ChatRoom consultationId={id!} clientName={consultation.clientName} disabled={ended} onFileShared={handleFileShared} />
               </div>
             ) : isOffline && started ? (
               <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
@@ -321,21 +262,6 @@ export default function ConsultationRoom() {
             )}
           </div>
 
-          {/* Video call button */}
-          {isVideo && started && !ended && (
-            <div className="bg-card rounded-lg border p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-sm">Video Call</h3>
-                  <p className="text-xs text-muted-foreground">Bergabung ke sesi video call</p>
-                </div>
-                <Button className="gap-2 h-9 text-sm font-semibold" onClick={() => window.open('https://meet.google.com', '_blank')}>
-                  <Video className="h-4 w-4" /> Join Video Call
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Bukti Konsultasi - proof photos */}
           {(startPhoto || endPhoto) && (
             <div className="bg-card rounded-lg border">
@@ -348,26 +274,36 @@ export default function ConsultationRoom() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Foto Mulai</p>
-                      {isSuperadmin && (
+                      {canEdit && (
                         <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => handleEditPhoto('edit_start')}>
                           <Edit2 className="h-3 w-3" /> Ganti
                         </Button>
                       )}
                     </div>
-                    <img src={startPhoto} alt="Bukti mulai konsultasi" className="w-full rounded-lg border object-cover max-h-48" />
+                    <img
+                      src={startPhoto}
+                      alt="Bukti mulai konsultasi"
+                      className="w-full rounded-lg border object-cover max-h-48 cursor-pointer hover:opacity-90 transition"
+                      onClick={() => openPhotoModal(startPhoto, 'Bukti Mulai Konsultasi')}
+                    />
                   </div>
                 )}
                 {endPhoto && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Foto Selesai</p>
-                      {isSuperadmin && (
+                      {canEdit && (
                         <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => handleEditPhoto('edit_end')}>
                           <Edit2 className="h-3 w-3" /> Ganti
                         </Button>
                       )}
                     </div>
-                    <img src={endPhoto} alt="Bukti akhir konsultasi" className="w-full rounded-lg border object-cover max-h-48" />
+                    <img
+                      src={endPhoto}
+                      alt="Bukti akhir konsultasi"
+                      className="w-full rounded-lg border object-cover max-h-48 cursor-pointer hover:opacity-90 transition"
+                      onClick={() => openPhotoModal(endPhoto, 'Bukti Akhir Konsultasi')}
+                    />
                   </div>
                 )}
               </div>
@@ -377,7 +313,7 @@ export default function ConsultationRoom() {
           {/* Rating mobile */}
           {showRating && (
             <div className="lg:hidden">
-              <RatingPanel clientName={consultation.clientName} />
+              <RatingPanel clientName={consultation.clientName} consultationId={id!} existingRating={consultation.rating} existingReview={consultation.review} />
             </div>
           )}
         </div>
@@ -429,7 +365,7 @@ export default function ConsultationRoom() {
                 </div>
               ))}
 
-              {/* Duration with superadmin edit */}
+              {/* Duration with edit */}
               <div className="flex items-center gap-3">
                 <div className="h-7 w-7 rounded bg-primary/10 flex items-center justify-center shrink-0">
                   <Clock className="h-3 w-3 text-primary" />
@@ -447,7 +383,7 @@ export default function ConsultationRoom() {
                     <div className="flex items-center gap-1.5">
                       {timer.isRunning && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                       <span className="text-[13px] font-bold font-mono text-primary">{timer.formatted}</span>
-                      {isSuperadmin && (
+                      {canEdit && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 ml-1" onClick={() => setEditingDuration(true)}>
                           <Edit2 className="h-3 w-3 text-muted-foreground" />
                         </Button>
@@ -473,7 +409,7 @@ export default function ConsultationRoom() {
 
           {showRating && (
             <div className="hidden lg:block">
-              <RatingPanel clientName={consultation.clientName} />
+              <RatingPanel clientName={consultation.clientName} consultationId={id!} existingRating={consultation.rating} existingReview={consultation.review} />
             </div>
           )}
         </div>
@@ -489,6 +425,13 @@ export default function ConsultationRoom() {
           cameraMode === 'edit_start' ? 'Ganti Foto Mulai' :
           'Ganti Foto Selesai'
         }
+      />
+
+      <PhotoModal
+        open={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        imageUrl={photoModalUrl}
+        title={photoModalTitle}
       />
     </div>
   );
