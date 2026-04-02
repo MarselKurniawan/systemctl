@@ -216,10 +216,75 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="px-4 sm:px-6 pb-4 sm:pb-6 pt-4 space-y-4 sm:space-y-5">
-          {/* Row 1 - NIK with lookup */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">NIK (16 digit)</Label>
+          {isClient ? (
+            <div className="bg-muted/50 rounded-lg p-3 border space-y-1">
+              <p className="text-sm font-semibold text-foreground">Data Klien (dari profil Anda)</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
+                <span className="text-muted-foreground">NIK:</span><span className="font-medium">{form.nik || '-'}</span>
+                <span className="text-muted-foreground">Nama:</span><span className="font-medium">{form.namaPengguna || '-'}</span>
+                <span className="text-muted-foreground">Telp:</span><span className="font-medium">{form.telp || '-'}</span>
+                <span className="text-muted-foreground">Jenis Kelamin:</span><span className="font-medium">{form.jenisKelamin}</span>
+                <span className="text-muted-foreground">Disabilitas:</span><span className="font-medium">{form.penyandangDisabilitas}</span>
+              </div>
+            </div>
+          ) : (
+            <>
+            {/* Row 1 - NIK with lookup */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">NIK (16 digit)</Label>
+                <div className="flex gap-2">
+                  <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} className="flex-1" />
+                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={lookupNik} disabled={form.nik.length !== 16 || nikSearching}>
+                    {nikFound ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
+                {nikFound && <p className="text-xs text-emerald-600 font-medium">✓ Data ditemukan & dimuat</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Nama Pengguna</Label>
+                <Input value={form.namaPengguna} onChange={(e) => update('namaPengguna', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Row 2 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Telp</Label>
+                <Input value={form.telp} onChange={(e) => update('telp', e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Tanggal Lahir</Label>
+                <Input type="date" value={form.tanggalLahir} onChange={(e) => update('tanggalLahir', e.target.value)} />
+              </div>
+            </div>
+
+            {/* Row 3 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Jenis Kelamin</Label>
+                <Select value={form.jenisKelamin} onValueChange={(v) => update('jenisKelamin', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Laki Laki">Laki Laki</SelectItem>
+                    <SelectItem value="Perempuan">Perempuan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Penyandang Disabilitas</Label>
+                <Select value={form.penyandangDisabilitas} onValueChange={(v) => update('penyandangDisabilitas', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ya">Ya</SelectItem>
+                    <SelectItem value="Tidak">Tidak</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            </>
+          )}
               <div className="flex gap-2">
                 <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} className="flex-1" />
                 <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={lookupNik} disabled={form.nik.length !== 16 || nikSearching}>
