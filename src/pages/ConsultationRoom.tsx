@@ -1,9 +1,9 @@
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon, Edit2, Save } from 'lucide-react';
+import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon, Edit2, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { consultations } from '@/data/mockData';
+import { useConsultation } from '@/hooks/useConsultations';
 import { useTimer } from '@/hooks/useTimer';
 import { useAuth } from '@/contexts/AuthContext';
 import ChatRoom from '@/components/consultation/ChatRoom';
