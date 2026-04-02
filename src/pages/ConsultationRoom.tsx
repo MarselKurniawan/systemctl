@@ -1,12 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon } from 'lucide-react';
+import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon, Edit2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { consultations } from '@/data/mockData';
 import { useTimer } from '@/hooks/useTimer';
+import { useAuth } from '@/contexts/AuthContext';
 import ChatRoom from '@/components/consultation/ChatRoom';
 import RatingPanel from '@/components/consultation/RatingPanel';
 import CameraModal from '@/components/consultation/CameraModal';
+import { toast } from 'sonner';
 
 const statusStyle: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-800',
@@ -18,15 +21,21 @@ const typeLabel: Record<string, string> = { chat: 'Chat Online', offline: 'Offli
 
 export default function ConsultationRoom() {
   const { id } = useParams();
+  const { role } = useAuth();
   const consultation = consultations.find((c) => c.id === id);
   const timer = useTimer();
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [cameraMode, setCameraMode] = useState<'start' | 'end'>('start');
+  const [cameraMode, setCameraMode] = useState<'start' | 'end' | 'edit_start' | 'edit_end'>('start');
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [startPhoto, setStartPhoto] = useState<string | null>(null);
   const [endPhoto, setEndPhoto] = useState<string | null>(null);
+
+  // Superadmin edit state
+  const isSuperadmin = role === 'superadmin';
+  const [editingDuration, setEditingDuration] = useState(false);
+  const [editDurationValue, setEditDurationValue] = useState(consultation?.duration?.toString() || '0');
 
   if (!consultation) {
     return (
@@ -46,12 +55,30 @@ export default function ConsultationRoom() {
   const handleEndOffline = () => { setCameraMode('end'); setCameraOpen(true); };
   const handleCameraCapture = (imageData: string) => {
     if (cameraMode === 'start') { setStartPhoto(imageData); setStarted(true); timer.start(); }
-    else { setEndPhoto(imageData); setEnded(true); timer.stop(); }
+    else if (cameraMode === 'end') { setEndPhoto(imageData); setEnded(true); timer.stop(); }
+    else if (cameraMode === 'edit_start') { setStartPhoto(imageData); toast.success('Foto mulai berhasil diperbarui'); }
+    else if (cameraMode === 'edit_end') { setEndPhoto(imageData); toast.success('Foto selesai berhasil diperbarui'); }
   };
   const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); };
   const handleEndChat = () => { setChatOpen(false); setEnded(true); timer.stop(); };
   const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); };
   const handleEndVideo = () => { setEnded(true); timer.stop(); };
+
+  const handleSaveDuration = () => {
+    const mins = parseInt(editDurationValue);
+    if (isNaN(mins) || mins < 0) {
+      toast.error('Durasi tidak valid');
+      return;
+    }
+    // In real app, save to database
+    toast.success(`Durasi diperbarui menjadi ${mins} menit`);
+    setEditingDuration(false);
+  };
+
+  const handleEditPhoto = (mode: 'edit_start' | 'edit_end') => {
+    setCameraMode(mode);
+    setCameraOpen(true);
+  };
 
   return (
     <div className="space-y-5">
@@ -76,7 +103,7 @@ export default function ConsultationRoom() {
         <div className="flex items-center gap-3 flex-wrap">
           {(started || ended) && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-              {timer.isRunning && <span className="h-2 w-2 rounded-full bg-success animate-pulse-live" />}
+              {timer.isRunning && <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />}
               <Clock className="h-3.5 w-3.5 text-primary" />
               <span className="font-mono text-sm font-bold text-primary">{timer.formatted}</span>
             </div>
@@ -106,7 +133,7 @@ export default function ConsultationRoom() {
                 </div>
                 {ended ? (
                   <div className="text-center">
-                    <p className="font-semibold text-success">✓ Konsultasi Selesai</p>
+                    <p className="font-semibold text-emerald-600">✓ Konsultasi Selesai</p>
                     <p className="text-xs text-muted-foreground mt-1">Sesi telah berakhir</p>
                   </div>
                 ) : (
@@ -154,13 +181,27 @@ export default function ConsultationRoom() {
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {startPhoto && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Foto Mulai</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Foto Mulai</p>
+                      {isSuperadmin && (
+                        <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => handleEditPhoto('edit_start')}>
+                          <Edit2 className="h-3 w-3" /> Ganti
+                        </Button>
+                      )}
+                    </div>
                     <img src={startPhoto} alt="Bukti mulai konsultasi" className="w-full rounded-lg border object-cover max-h-48" />
                   </div>
                 )}
                 {endPhoto && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Foto Selesai</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Foto Selesai</p>
+                      {isSuperadmin && (
+                        <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => handleEditPhoto('edit_end')}>
+                          <Edit2 className="h-3 w-3" /> Ganti
+                        </Button>
+                      )}
+                    </div>
                     <img src={endPhoto} alt="Bukti akhir konsultasi" className="w-full rounded-lg border object-cover max-h-48" />
                   </div>
                 )}
@@ -222,16 +263,42 @@ export default function ConsultationRoom() {
                   </div>
                 </div>
               ))}
+
+              {/* Duration with superadmin edit */}
               <div className="flex items-center gap-3">
                 <div className="h-7 w-7 rounded bg-primary/10 flex items-center justify-center shrink-0">
                   <Clock className="h-3 w-3 text-primary" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Durasi</p>
-                  <div className="flex items-center gap-1.5">
-                    {timer.isRunning && <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-live" />}
-                    <span className="text-[13px] font-bold font-mono text-primary">{timer.formatted}</span>
-                  </div>
+                  {editingDuration ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        type="number"
+                        value={editDurationValue}
+                        onChange={(e) => setEditDurationValue(e.target.value)}
+                        className="h-7 w-20 text-xs"
+                        min={0}
+                      />
+                      <span className="text-xs text-muted-foreground">menit</span>
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDuration}>
+                        <Save className="h-3 w-3" /> Simpan
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingDuration(false)}>
+                        Batal
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      {timer.isRunning && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                      <span className="text-[13px] font-bold font-mono text-primary">{timer.formatted}</span>
+                      {isSuperadmin && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 ml-1" onClick={() => setEditingDuration(true)}>
+                          <Edit2 className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -249,7 +316,12 @@ export default function ConsultationRoom() {
         open={cameraOpen}
         onClose={() => setCameraOpen(false)}
         onCapture={handleCameraCapture}
-        title={cameraMode === 'start' ? 'Foto Mulai Konsultasi' : 'Foto Akhiri Konsultasi'}
+        title={
+          cameraMode === 'start' ? 'Foto Mulai Konsultasi' :
+          cameraMode === 'end' ? 'Foto Akhiri Konsultasi' :
+          cameraMode === 'edit_start' ? 'Ganti Foto Mulai' :
+          'Ganti Foto Selesai'
+        }
       />
     </div>
   );

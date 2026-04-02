@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { consultations } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import CreateConsultationModal from '@/components/consultation/CreateConsultationModal';
 import { exportToPDF, exportToCSV, exportToExcel } from '@/lib/exportUtils';
 import { cn } from '@/lib/utils';
@@ -42,6 +43,7 @@ const PER_PAGE_OPTIONS = [10, 20, 30, 0]; // 0 = show all
 
 export default function ConsultationList() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -144,9 +146,11 @@ export default function ConsultationList() {
           <h1 className="text-xl font-bold">Riwayat Konsultasi</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Kelola dan pantau semua sesi konsultasi hukum</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="gap-2 h-10 font-semibold">
-          <Plus className="h-4 w-4" /> Buat Konsultasi
-        </Button>
+        {role && ['superadmin', 'admin', 'lawyer', 'client'].includes(role) && (
+          <Button onClick={() => setShowCreate(true)} className="gap-2 h-10 font-semibold">
+            <Plus className="h-4 w-4" /> Buat Konsultasi
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
