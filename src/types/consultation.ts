@@ -15,9 +15,18 @@ export interface Consultation {
   status: ConsultationStatus;
   agenda: string;
   lawyerName?: string;
-  duration?: number; // in minutes
+  duration?: number;
   startPhoto?: string;
   endPhoto?: string;
+  rating?: number;
+  review?: string;
+  nik?: string;
+  telp?: string;
+  tanggalLahir?: string;
+  jenisKelamin?: string;
+  penyandangDisabilitas?: boolean;
+  clientUserId?: string;
+  lawyerUserId?: string;
 }
 
 export interface ChatMessage {
