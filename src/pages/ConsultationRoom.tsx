@@ -250,7 +250,7 @@ export default function ConsultationRoom() {
                 )}
               </div>
             ) : (
-              <div className="h-[460px] flex flex-col items-center justify-center p-8">
+              <div className="h-[360px] sm:h-[460px] flex flex-col items-center justify-center p-8">
                 <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center mb-3">
                   {isOffline ? <Camera className="h-6 w-6 text-muted-foreground/40" /> :
                    isChat ? <MessageCircle className="h-6 w-6 text-muted-foreground/40" /> :
