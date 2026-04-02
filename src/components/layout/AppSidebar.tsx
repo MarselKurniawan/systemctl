@@ -1,12 +1,23 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Clock, Database, Users, ChevronDown, Gavel } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Clock, Database, Users, ChevronDown, Gavel, UserCheck } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
-const menuItems = [
-  { label: 'Riwayat Konsultasi', icon: Clock, path: '/' },
+interface MenuItem {
+  label: string;
+  icon: any;
+  path?: string;
+  roles?: string[];
+  children?: { label: string; path: string; roles?: string[] }[];
+}
+
+const allMenuItems: MenuItem[] = [
+  { label: 'Riwayat Konsultasi', icon: Clock, path: '/', roles: ['superadmin', 'admin', 'lawyer', 'client'] },
   {
     label: 'Master Data',
     icon: Database,
+    roles: ['superadmin', 'admin'],
     children: [
       { label: 'Jenis Konsultasi', path: '/master/jenis-konsultasi' },
       { label: 'Jenis Layanan', path: '/master/jenis-layanan' },
@@ -16,16 +27,37 @@ const menuItems = [
   {
     label: 'User Management',
     icon: Users,
+    roles: ['superadmin', 'admin'],
     children: [
       { label: 'Daftar User', path: '/users' },
-      { label: 'Roles', path: '/users/roles' },
+      { label: 'Roles', path: '/users/roles', roles: ['superadmin'] },
+      { label: 'Persetujuan User', path: '/users/approval' },
     ],
   },
 ];
 
 export default function AppSidebar() {
   const location = useLocation();
+  const { role } = useAuth();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (role && ['superadmin', 'admin', 'lawyer'].includes(role)) {
+      const fetchPending = async () => {
+        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending');
+        setPendingCount(count || 0);
+      };
+      fetchPending();
+
+      const channel = supabase
+        .channel('sidebar-pending')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchPending())
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [role]);
 
   const toggleMenu = (label: string) => {
     setOpenMenus((prev) =>
@@ -34,6 +66,12 @@ export default function AppSidebar() {
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Filter menu items based on role
+  const menuItems = allMenuItems.filter((item) => {
+    if (!item.roles) return true;
+    return role && item.roles.includes(role);
+  });
 
   return (
     <aside className="w-[250px] min-h-screen bg-sidebar flex flex-col shrink-0">
@@ -62,6 +100,12 @@ export default function AppSidebar() {
           const active = isActive(item.path!) || hasActiveChild;
 
           if (item.children) {
+            // Filter children by role
+            const visibleChildren = item.children.filter((c) => {
+              if (!c.roles) return true;
+              return role && c.roles.includes(role);
+            });
+
             return (
               <div key={item.label}>
                 <button
@@ -76,17 +120,22 @@ export default function AppSidebar() {
                 </button>
                 {isOpen && (
                   <div className="ml-8 mt-1 pl-3 border-l border-white/10 space-y-0.5">
-                    {item.children.map((child) => (
+                    {visibleChildren.map((child) => (
                       <Link
                         key={child.path}
                         to={child.path}
-                        className={`block px-3 py-2 text-[12px] font-medium rounded-md transition-colors ${
+                        className={`flex items-center justify-between px-3 py-2 text-[12px] font-medium rounded-md transition-colors ${
                           isActive(child.path)
                             ? 'text-secondary font-semibold'
                             : 'text-white/40 hover:text-white/70'
                         }`}
                       >
-                        {child.label}
+                        <span>{child.label}</span>
+                        {child.path === '/users/approval' && pendingCount > 0 && (
+                          <span className="h-5 min-w-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                            {pendingCount}
+                          </span>
+                        )}
                       </Link>
                     ))}
                   </div>
