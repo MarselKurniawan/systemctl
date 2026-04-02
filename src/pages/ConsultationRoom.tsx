@@ -305,9 +305,18 @@ export default function ConsultationRoom() {
             </div>
           </div>
 
+          {/* Client Detail Card */}
+          <ClientDetailCard
+            clientName={consultation.clientName}
+            nik="3201234567890123"
+            nomorWa="081234567890"
+            jenisKelamin="Laki Laki"
+            penyandangDisabilitas={false}
+          />
+
           {showRating && (
             <div className="hidden lg:block">
-              <RatingPanel />
+              <RatingPanel clientName={consultation.clientName} />
             </div>
           )}
         </div>
