@@ -23,7 +23,7 @@ interface LawyerOption {
   isOnConsultation: boolean;
 }
 
-export default function CreateConsultationModal({ open, onClose }: Props) {
+export default function CreateConsultationModal({ open, onClose, onCreated }: Props) {
   const { role, user } = useAuth();
   const [jenisLayananOptions, setJenisLayananOptions] = useState<{ id: string; nama: string }[]>([]);
   const [jenisHukumOptions, setJenisHukumOptions] = useState<{ id: string; nama: string }[]>([]);
