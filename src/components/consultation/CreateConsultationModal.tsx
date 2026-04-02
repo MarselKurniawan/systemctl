@@ -115,6 +115,8 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
 
   const consultationTypes = role === 'client'
     ? [{ value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }]
+    : role === 'lawyer'
+    ? [{ value: 'offline', label: 'Offline' }]
     : [{ value: 'offline', label: 'Offline' }, { value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }];
 
   const isLawyer = role === 'lawyer';
