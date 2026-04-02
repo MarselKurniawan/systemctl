@@ -25,13 +25,15 @@ interface LawyerOption {
 }
 
 export default function CreateConsultationModal({ open, onClose, onCreated }: Props) {
-  const { role, user } = useAuth();
+  const { role, user, profile } = useAuth();
   const [jenisLayananOptions, setJenisLayananOptions] = useState<{ id: string; nama: string }[]>([]);
   const [jenisHukumOptions, setJenisHukumOptions] = useState<{ id: string; nama: string }[]>([]);
   const [lawyerOptions, setLawyerOptions] = useState<LawyerOption[]>([]);
   const [handleSelf, setHandleSelf] = useState(false);
   const [nikFound, setNikFound] = useState(false);
   const [nikSearching, setNikSearching] = useState(false);
+
+  const isClient = role === 'client';
 
   const [form, setForm] = useState({
     namaPengguna: '',
@@ -41,13 +43,28 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
     jenisKelamin: 'Laki Laki',
     penyandangDisabilitas: 'Ya',
     namaKasus: '',
-    jenisKonsultasi: role === 'client' ? 'chat' : 'offline',
+    jenisKonsultasi: isClient ? 'chat' : 'offline',
     jenisLayanan: '',
     jenisHukum: '',
     tanggalKonsultasi: new Date().toISOString().split('T')[0],
     agenda: '',
     pilihLawyer: 'auto',
   });
+
+  // Auto-fill client profile data when modal opens
+  useEffect(() => {
+    if (open && isClient && profile) {
+      setForm(prev => ({
+        ...prev,
+        namaPengguna: profile.nama || prev.namaPengguna,
+        nik: profile.nik || prev.nik,
+        telp: profile.nomor_wa || prev.telp,
+        tanggalLahir: profile.tanggal_lahir || prev.tanggalLahir,
+        jenisKelamin: profile.jenis_kelamin || prev.jenisKelamin,
+        penyandangDisabilitas: profile.penyandang_disabilitas ? 'Ya' : 'Tidak',
+      }));
+    }
+  }, [open, isClient, profile]);
 
   const update = (field: string, value: string) => {
     setForm((p) => ({ ...p, [field]: value }));
