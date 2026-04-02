@@ -63,8 +63,8 @@ export default function ConsultationList() {
   // Available years from data
   const years = useMemo(() => {
     const ys = new Set(consultations.map(c => { const p = parseDateString(c.date); return p ? p.getFullYear() : 0; }).filter(Boolean));
-    return Array.from(ys).sort((a, b) => b - a);
-  }, []);
+    return Array.from(ys).sort((a, b) => (b as number) - (a as number));
+  }, [consultations]);
 
   // Filter logic
   const filtered = useMemo(() => {
