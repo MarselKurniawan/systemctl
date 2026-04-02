@@ -352,7 +352,7 @@ export default function ConsultationList() {
                   </span>
                   <span>•</span>
                   <span>{c.date}</span>
-                  {c.duration && <><span>•</span><span className="font-mono">{c.duration}m</span></>}
+                  {c.duration ? <><span>•</span><span>{formatDurationText(c.duration)}</span></> : null}
                 </div>
               </div>
             );
