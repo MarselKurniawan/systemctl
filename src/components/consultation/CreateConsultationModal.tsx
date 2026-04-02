@@ -24,6 +24,7 @@ const lawyers = [
 ];
 
 export default function CreateConsultationModal({ open, onClose }: Props) {
+  const { role } = useAuth();
   const [form, setForm] = useState({
     namaPengguna: '',
     nik: '',
@@ -32,7 +33,7 @@ export default function CreateConsultationModal({ open, onClose }: Props) {
     jenisKelamin: 'Laki Laki',
     penyandangDisabilitas: 'Ya',
     namaKasus: '',
-    jenisKonsultasi: 'offline',
+    jenisKonsultasi: role === 'client' ? 'chat' : 'offline',
     jenisLayanan: 'Layanan Konsultasi (SKTM)',
     jenisHukum: 'Pidana',
     tanggalKonsultasi: new Date().toISOString().split('T')[0],
@@ -42,10 +43,19 @@ export default function CreateConsultationModal({ open, onClose }: Props) {
 
   const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
 
+  // Client cannot create offline consultations
+  const consultationTypes = role === 'client'
+    ? [{ value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }]
+    : [{ value: 'offline', label: 'Offline' }, { value: 'chat', label: 'Chat' }, { value: 'video_call', label: 'Video Call' }];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.namaPengguna.trim() || !form.namaKasus.trim()) {
       toast({ title: 'Error', description: 'Nama Pengguna dan Nama Kasus wajib diisi', variant: 'destructive' });
+      return;
+    }
+    if (form.nik && form.nik.length !== 16) {
+      toast({ title: 'Error', description: 'NIK harus tepat 16 digit', variant: 'destructive' });
       return;
     }
     toast({ title: 'Berhasil', description: 'Konsultasi baru berhasil dibuat' });
