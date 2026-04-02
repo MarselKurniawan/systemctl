@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Props {
   open: boolean;
   onClose: () => void;
+  onCreated?: (consultationId: string, type: string) => void;
 }
 
 interface LawyerOption {
@@ -22,7 +23,7 @@ interface LawyerOption {
   isOnConsultation: boolean;
 }
 
-export default function CreateConsultationModal({ open, onClose }: Props) {
+export default function CreateConsultationModal({ open, onClose, onCreated }: Props) {
   const { role, user } = useAuth();
   const [jenisLayananOptions, setJenisLayananOptions] = useState<{ id: string; nama: string }[]>([]);
   const [jenisHukumOptions, setJenisHukumOptions] = useState<{ id: string; nama: string }[]>([]);
@@ -101,7 +102,17 @@ export default function CreateConsultationModal({ open, onClose }: Props) {
       return;
     }
     toast({ title: 'Berhasil', description: 'Konsultasi baru berhasil dibuat' });
+    
+    // Generate a mock consultation ID
+    const newId = 'new-' + Date.now();
     onClose();
+    
+    // If lawyer creates offline, trigger auto-start
+    if (isLawyer && form.jenisKonsultasi === 'offline') {
+      onCreated?.(newId, 'offline');
+    } else {
+      onCreated?.(newId, form.jenisKonsultasi);
+    }
   };
 
   return (

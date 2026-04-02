@@ -26,4 +26,12 @@ export interface ChatMessage {
   message: string;
   time: string;
   isUser: boolean;
+  file?: ChatFile;
+}
+
+export interface ChatFile {
+  name: string;
+  size: string;
+  url: string;
+  type: string;
 }

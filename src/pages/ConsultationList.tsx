@@ -403,7 +403,17 @@ export default function ConsultationList() {
       </div>
     </div>
 
-    <CreateConsultationModal open={showCreate} onClose={() => setShowCreate(false)} />
+    <CreateConsultationModal
+      open={showCreate}
+      onClose={() => setShowCreate(false)}
+      onCreated={(id, type) => {
+        if (type === 'offline') {
+          navigate(`/consultation/${id}?autostart=true`);
+        } else {
+          navigate(`/consultation/${id}`);
+        }
+      }}
+    />
     </>
   );
 }

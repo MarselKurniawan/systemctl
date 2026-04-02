@@ -1,5 +1,5 @@
-import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon, Edit2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import ChatRoom from '@/components/consultation/ChatRoom';
 import RatingPanel from '@/components/consultation/RatingPanel';
 import CameraModal from '@/components/consultation/CameraModal';
 import ClientDetailCard from '@/components/consultation/ClientDetailCard';
+import FileListCard from '@/components/consultation/FileListCard';
+import { ChatFile } from '@/types/consultation';
 import { toast } from 'sonner';
 
 const statusStyle: Record<string, string> = {
@@ -22,6 +24,7 @@ const typeLabel: Record<string, string> = { chat: 'Chat Online', offline: 'Offli
 
 export default function ConsultationRoom() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { role } = useAuth();
   const consultation = consultations.find((c) => c.id === id);
   const timer = useTimer();
@@ -32,13 +35,143 @@ export default function ConsultationRoom() {
   const [chatOpen, setChatOpen] = useState(false);
   const [startPhoto, setStartPhoto] = useState<string | null>(null);
   const [endPhoto, setEndPhoto] = useState<string | null>(null);
+  const [sharedFiles, setSharedFiles] = useState<ChatFile[]>([]);
+  const [autoStartDone, setAutoStartDone] = useState(false);
 
   // Superadmin edit state
   const isSuperadmin = role === 'superadmin';
   const [editingDuration, setEditingDuration] = useState(false);
   const [editDurationValue, setEditDurationValue] = useState(consultation?.duration?.toString() || '0');
 
+  // Auto-start for lawyer offline consultation
+  const autoStart = searchParams.get('autostart') === 'true';
+  useEffect(() => {
+    if (autoStart && !autoStartDone && consultation) {
+      const isOffline = consultation.consultationType === 'offline' || id?.startsWith('new-');
+      if (isOffline) {
+        setCameraMode('start');
+        setCameraOpen(true);
+        setAutoStartDone(true);
+      }
+    }
+  }, [autoStart, autoStartDone, consultation, id]);
+
+  const handleFileShared = useCallback((file: ChatFile) => {
+    setSharedFiles(prev => [...prev, file]);
+  }, []);
+
   if (!consultation) {
+    // For new consultations (from auto-redirect), show a placeholder
+    if (id?.startsWith('new-')) {
+      return (
+        <div className="space-y-5">
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Link to="/" className="hover:text-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Home</Link>
+            <ChevronRight className="h-3 w-3 opacity-40" />
+            <span className="text-foreground font-medium">Konsultasi Baru</span>
+          </nav>
+
+          <div className="bg-card rounded-lg border p-4 flex items-center gap-3">
+            <Link to="/"><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><ArrowLeft className="h-4 w-4" /></Button></Link>
+            <div>
+              <h1 className="text-lg font-bold">Ruang Konsultasi</h1>
+              <p className="text-xs text-muted-foreground">Konsultasi baru</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <div className="lg:col-span-3">
+              <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
+                {started ? (
+                  <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
+                    <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Camera className="h-7 w-7 text-primary/50" />
+                    </div>
+                    {ended ? (
+                      <div className="text-center">
+                        <p className="font-semibold text-emerald-600">✓ Konsultasi Selesai</p>
+                        <p className="text-xs text-muted-foreground mt-1">Sesi telah berakhir</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-sm font-semibold">Konsultasi Offline Berlangsung</p>
+                        <p className="text-xs text-muted-foreground mt-1">Sesi sedang berjalan</p>
+                        <div className="flex items-center gap-2 mt-3 px-3 py-1.5 bg-muted rounded-md">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <Clock className="h-3.5 w-3.5 text-primary" />
+                          <span className="font-mono text-sm font-bold text-primary">{timer.formatted}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="h-[460px] flex flex-col items-center justify-center p-8">
+                    <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center mb-3">
+                      <Camera className="h-6 w-6 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm font-medium text-muted-foreground">Mempersiapkan konsultasi...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Bukti photos */}
+              {(startPhoto || endPhoto) && (
+                <div className="bg-card rounded-lg border mt-5">
+                  <div className="px-4 py-3 border-b flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-primary" />
+                    <h3 className="font-bold text-sm">Bukti Konsultasi</h3>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {startPhoto && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Foto Mulai</p>
+                        <img src={startPhoto} alt="Bukti mulai" className="w-full rounded-lg border object-cover max-h-48" />
+                      </div>
+                    )}
+                    {endPhoto && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Foto Selesai</p>
+                        <img src={endPhoto} alt="Bukti selesai" className="w-full rounded-lg border object-cover max-h-48" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-2 space-y-5">
+              <FileListCard files={sharedFiles} />
+              {ended && <RatingPanel />}
+            </div>
+          </div>
+
+          {/* Top bar actions */}
+          <div className="fixed bottom-6 right-6 flex gap-2 z-50">
+            {!started && (
+              <Button onClick={() => { setCameraMode('start'); setCameraOpen(true); }} className="gap-2 h-10 shadow-lg">
+                <Camera className="h-4 w-4" /> Mulai Konsultasi
+              </Button>
+            )}
+            {started && !ended && (
+              <Button variant="destructive" onClick={() => { setCameraMode('end'); setCameraOpen(true); }} className="gap-2 h-10 shadow-lg">
+                <StopCircle className="h-4 w-4" /> Akhiri
+              </Button>
+            )}
+          </div>
+
+          <CameraModal
+            open={cameraOpen}
+            onClose={() => setCameraOpen(false)}
+            onCapture={(imageData) => {
+              if (cameraMode === 'start') { setStartPhoto(imageData); setStarted(true); timer.start(); }
+              else if (cameraMode === 'end') { setEndPhoto(imageData); setEnded(true); timer.stop(); }
+            }}
+            title={cameraMode === 'start' ? 'Foto Mulai Konsultasi' : 'Foto Akhiri Konsultasi'}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center py-24">
         <p className="font-bold text-lg mb-2">Konsultasi tidak ditemukan</p>
@@ -67,19 +200,12 @@ export default function ConsultationRoom() {
 
   const handleSaveDuration = () => {
     const mins = parseInt(editDurationValue);
-    if (isNaN(mins) || mins < 0) {
-      toast.error('Durasi tidak valid');
-      return;
-    }
-    // In real app, save to database
+    if (isNaN(mins) || mins < 0) { toast.error('Durasi tidak valid'); return; }
     toast.success(`Durasi diperbarui menjadi ${mins} menit`);
     setEditingDuration(false);
   };
 
-  const handleEditPhoto = (mode: 'edit_start' | 'edit_end') => {
-    setCameraMode(mode);
-    setCameraOpen(true);
-  };
+  const handleEditPhoto = (mode: 'edit_start' | 'edit_end') => { setCameraMode(mode); setCameraOpen(true); };
 
   return (
     <div className="space-y-5">
@@ -125,7 +251,7 @@ export default function ConsultationRoom() {
           <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '460px' }}>
             {(isChat || isVideo) && chatOpen ? (
               <div className="h-[460px] flex flex-col">
-                <ChatRoom clientName={consultation.clientName} disabled={ended} />
+                <ChatRoom clientName={consultation.clientName} disabled={ended} onFileShared={handleFileShared} />
               </div>
             ) : isOffline && started ? (
               <div className="h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
@@ -218,7 +344,7 @@ export default function ConsultationRoom() {
           )}
         </div>
 
-        {/* Right: detail + rating */}
+        {/* Right: detail + files + rating */}
         <div className="lg:col-span-2 space-y-5">
           <div className="bg-card rounded-lg border">
             <div className="px-4 py-3 border-b">
@@ -274,20 +400,10 @@ export default function ConsultationRoom() {
                   <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Durasi</p>
                   {editingDuration ? (
                     <div className="flex items-center gap-2 mt-1">
-                      <Input
-                        type="number"
-                        value={editDurationValue}
-                        onChange={(e) => setEditDurationValue(e.target.value)}
-                        className="h-7 w-20 text-xs"
-                        min={0}
-                      />
+                      <Input type="number" value={editDurationValue} onChange={(e) => setEditDurationValue(e.target.value)} className="h-7 w-20 text-xs" min={0} />
                       <span className="text-xs text-muted-foreground">menit</span>
-                      <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDuration}>
-                        <Save className="h-3 w-3" /> Simpan
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingDuration(false)}>
-                        Batal
-                      </Button>
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDuration}><Save className="h-3 w-3" /> Simpan</Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingDuration(false)}>Batal</Button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
@@ -313,6 +429,9 @@ export default function ConsultationRoom() {
             jenisKelamin="Laki Laki"
             penyandangDisabilitas={false}
           />
+
+          {/* File Collection Card */}
+          <FileListCard files={sharedFiles} />
 
           {showRating && (
             <div className="hidden lg:block">
