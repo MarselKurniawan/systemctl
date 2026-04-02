@@ -57,21 +57,23 @@ Deno.serve(async (req) => {
 
   const userId = userData.user.id;
 
-  // Update profile
-  const profileUpdate: Record<string, any> = {
+  // Upsert profile (trigger may not fire for admin-created users)
+  const profileData: Record<string, any> = {
+    user_id: userId,
     nama,
+    email,
     nomor_wa: nomor_wa || null,
     approval_status: "approved",
   };
-  if (nik) profileUpdate.nik = nik;
-  if (tanggal_lahir) profileUpdate.tanggal_lahir = tanggal_lahir;
-  if (jenis_kelamin) profileUpdate.jenis_kelamin = jenis_kelamin;
-  if (penyandang_disabilitas !== undefined) profileUpdate.penyandang_disabilitas = penyandang_disabilitas;
+  if (nik) profileData.nik = nik;
+  if (tanggal_lahir) profileData.tanggal_lahir = tanggal_lahir;
+  if (jenis_kelamin) profileData.jenis_kelamin = jenis_kelamin;
+  if (penyandang_disabilitas !== undefined) profileData.penyandang_disabilitas = penyandang_disabilitas;
 
-  await supabaseAdmin.from("profiles").update(profileUpdate).eq("user_id", userId);
+  await supabaseAdmin.from("profiles").upsert(profileData, { onConflict: "user_id" });
 
-  // Update role from default 'client' to desired role
-  await supabaseAdmin.from("user_roles").update({ role }).eq("user_id", userId);
+  // Upsert role
+  await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id" });
 
   return new Response(JSON.stringify({ success: true, userId }), {
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
