@@ -26,7 +26,7 @@ export default function ConsultationRoom() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const { role } = useAuth();
-  const consultation = consultations.find((c) => c.id === id);
+  const { consultation, loading: consultationLoading, updateConsultation } = useConsultation(id);
   const timer = useTimer();
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraMode, setCameraMode] = useState<'start' | 'end' | 'edit_start' | 'edit_end'>('start');
@@ -41,7 +41,12 @@ export default function ConsultationRoom() {
   // Superadmin edit state
   const isSuperadmin = role === 'superadmin';
   const [editingDuration, setEditingDuration] = useState(false);
-  const [editDurationValue, setEditDurationValue] = useState(consultation?.duration?.toString() || '0');
+  const [editDurationValue, setEditDurationValue] = useState('0');
+
+  // Sync edit duration value when consultation loads
+  useEffect(() => {
+    if (consultation?.duration) setEditDurationValue(consultation.duration.toString());
+  }, [consultation?.duration]);
 
   // Auto-start for lawyer offline consultation
   const autoStart = searchParams.get('autostart') === 'true';
