@@ -107,11 +107,12 @@ export default function AdminListPage() {
                 <Shield className={`h-5 w-5 ${a.userRole === 'superadmin' ? 'text-amber-600' : 'text-blue-600'}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-semibold text-foreground truncate">{a.nama}</p>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${a.userRole === 'superadmin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
                     {a.userRole === 'superadmin' ? 'Super Admin' : 'Admin'}
                   </span>
+                  <OnlineBadge lastSeenAt={(a as any).last_seen_at} />
                 </div>
                 <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                   <Mail className="h-3 w-3" />{a.email}

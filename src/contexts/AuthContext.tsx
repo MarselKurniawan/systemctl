@@ -62,6 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await fetchProfileAndRole(user.id);
   };
 
+  // Update last_seen_at periodically
+  useEffect(() => {
+    if (!user) return;
+    const updateLastSeen = () => {
+      supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', user.id).then(() => {});
+    };
+    updateLastSeen();
+    const interval = setInterval(updateLastSeen, 5 * 60 * 1000); // every 5 min
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);

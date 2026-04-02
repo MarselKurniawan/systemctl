@@ -101,7 +101,10 @@ export default function LawyerListPage() {
                 <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">{l.nama}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-foreground truncate">{l.nama}</p>
+                  <OnlineBadge lastSeenAt={(l as any).last_seen_at} />
+                </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
                   {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
                   {l.nomor_wa && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.nomor_wa}</span>}

@@ -60,8 +60,9 @@ export default function ClientListPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-semibold text-foreground truncate">{c.nama}</p>
+                  <OnlineBadge lastSeenAt={(c as any).last_seen_at} />
                   {(c as any).penyandang_disabilitas && (
                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold">
                       <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M8 12h8l-2 8H10l-2-8"/></svg>

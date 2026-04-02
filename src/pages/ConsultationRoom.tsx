@@ -213,7 +213,7 @@ export default function ConsultationRoom() {
           {/* Rating mobile */}
           {showRating && (
             <div className="lg:hidden">
-              <RatingPanel />
+              <RatingPanel clientName={consultation.clientName} />
             </div>
           )}
         </div>
