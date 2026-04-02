@@ -65,6 +65,14 @@ export default function ConsultationRoom() {
     setSharedFiles(prev => [...prev, file]);
   }, []);
 
+  if (consultationLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!consultation) {
     // For new consultations (from auto-redirect), show a placeholder
     if (id?.startsWith('new-')) {
