@@ -200,20 +200,45 @@ export default function ConsultationRoom() {
 
   const handleStartOffline = () => { setCameraMode('start'); setCameraOpen(true); };
   const handleEndOffline = () => { setCameraMode('end'); setCameraOpen(true); };
-  const handleCameraCapture = (imageData: string) => {
-    if (cameraMode === 'start') { setStartPhoto(imageData); setStarted(true); timer.start(); }
-    else if (cameraMode === 'end') { setEndPhoto(imageData); setEnded(true); timer.stop(); }
-    else if (cameraMode === 'edit_start') { setStartPhoto(imageData); toast.success('Foto mulai berhasil diperbarui'); }
-    else if (cameraMode === 'edit_end') { setEndPhoto(imageData); toast.success('Foto selesai berhasil diperbarui'); }
+  const handleCameraCapture = async (imageData: string) => {
+    if (cameraMode === 'start') {
+      setStartPhoto(imageData);
+      setStarted(true);
+      timer.start();
+      await updateConsultation({ start_photo: imageData, status: 'in_progress' });
+    } else if (cameraMode === 'end') {
+      setEndPhoto(imageData);
+      setEnded(true);
+      timer.stop();
+      const durationMins = Math.floor(timer.seconds / 60);
+      await updateConsultation({ end_photo: imageData, status: 'completed', duration: durationMins });
+    } else if (cameraMode === 'edit_start') {
+      setStartPhoto(imageData);
+      await updateConsultation({ start_photo: imageData });
+      toast.success('Foto mulai berhasil diperbarui');
+    } else if (cameraMode === 'edit_end') {
+      setEndPhoto(imageData);
+      await updateConsultation({ end_photo: imageData });
+      toast.success('Foto selesai berhasil diperbarui');
+    }
   };
-  const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); };
-  const handleEndChat = () => { setChatOpen(false); setEnded(true); timer.stop(); };
-  const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); };
-  const handleEndVideo = () => { setEnded(true); timer.stop(); };
+  const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress' }); };
+  const handleEndChat = () => {
+    setChatOpen(false); setEnded(true); timer.stop();
+    const durationMins = Math.floor(timer.seconds / 60);
+    updateConsultation({ status: 'completed', duration: durationMins });
+  };
+  const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress' }); };
+  const handleEndVideo = () => {
+    setEnded(true); timer.stop();
+    const durationMins = Math.floor(timer.seconds / 60);
+    updateConsultation({ status: 'completed', duration: durationMins });
+  };
 
-  const handleSaveDuration = () => {
+  const handleSaveDuration = async () => {
     const mins = parseInt(editDurationValue);
     if (isNaN(mins) || mins < 0) { toast.error('Durasi tidak valid'); return; }
+    await updateConsultation({ duration: mins });
     toast.success(`Durasi diperbarui menjadi ${mins} menit`);
     setEditingDuration(false);
   };
