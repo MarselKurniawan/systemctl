@@ -13,7 +13,6 @@ import ClientDetailCard from '@/components/consultation/ClientDetailCard';
 import FileListCard from '@/components/consultation/FileListCard';
 import PhotoModal from '@/components/consultation/PhotoModal';
 import JitsiRoom from '@/components/consultation/JitsiRoom';
-import { ChatFile } from '@/types/consultation';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -38,7 +37,6 @@ export default function ConsultationRoom() {
   const [chatOpen, setChatOpen] = useState(false);
   const [startPhoto, setStartPhoto] = useState<string | null>(null);
   const [endPhoto, setEndPhoto] = useState<string | null>(null);
-  const [sharedFiles, setSharedFiles] = useState<ChatFile[]>([]);
   const [autoStartDone, setAutoStartDone] = useState(false);
 
   // Photo modal state
@@ -80,10 +78,6 @@ export default function ConsultationRoom() {
       }
     }
   }, [autoStart, autoStartDone, consultation]);
-
-  const handleFileShared = useCallback((file: ChatFile) => {
-    setSharedFiles(prev => [...prev, file]);
-  }, []);
 
   const openPhotoModal = (url: string, title: string) => {
     setPhotoModalUrl(url);
@@ -157,17 +151,17 @@ export default function ConsultationRoom() {
     }
   };
 
-  const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress' }); };
+  const handleStartChat = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() }); };
   const handleEndChat = () => {
     setChatOpen(false); setEnded(true); timer.stop();
     const durationMins = Math.floor(timer.seconds / 60);
-    updateConsultation({ status: 'completed', duration: durationMins });
+    updateConsultation({ status: 'completed', duration: durationMins, end_time: new Date().toISOString() });
   };
-  const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress' }); };
+  const handleStartVideo = () => { setChatOpen(true); setStarted(true); timer.start(); updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() }); };
   const handleEndVideo = () => {
     setEnded(true); timer.stop();
     const durationMins = Math.floor(timer.seconds / 60);
-    updateConsultation({ status: 'completed', duration: durationMins });
+    updateConsultation({ status: 'completed', duration: durationMins, end_time: new Date().toISOString() });
   };
 
   const handleSaveDuration = async () => {
@@ -230,7 +224,7 @@ export default function ConsultationRoom() {
               <JitsiRoom roomName={jitsiRoomName} displayName={displayName} onClose={handleEndVideo} />
             ) : (isChat) && chatOpen ? (
               <div className="h-[360px] sm:h-[460px] flex flex-col">
-                <ChatRoom consultationId={id!} clientName={consultation.clientName} disabled={ended} onFileShared={handleFileShared} />
+              <ChatRoom consultationId={id!} clientName={consultation.clientName} disabled={ended} />
               </div>
             ) : isOffline && started ? (
               <div className="h-[360px] sm:h-[460px] flex flex-col items-center justify-center p-8 space-y-4">
@@ -405,7 +399,7 @@ export default function ConsultationRoom() {
           />
 
           {/* File Collection Card */}
-          <FileListCard files={sharedFiles} />
+          <FileListCard consultationId={id!} />
 
           {showRating && (
             <div className="hidden lg:block">
