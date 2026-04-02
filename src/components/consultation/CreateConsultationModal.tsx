@@ -348,8 +348,8 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
             </div>
           )}
 
-          <Button type="submit" className="w-full h-11 text-sm font-bold">
-            Simpan
+          <Button type="submit" className="w-full h-11 text-sm font-bold" disabled={saving}>
+            {saving ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </form>
       </DialogContent>
