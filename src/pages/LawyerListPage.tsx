@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Plus, UserCircle, Mail, Phone, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import OnlineBadge from '@/components/shared/OnlineBadge';
 
 export default function LawyerListPage() {
   const { role } = useAuth();
