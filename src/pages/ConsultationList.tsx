@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { formatDurationText } from '@/hooks/useTimer';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download, ExternalLink, Trash2, Plus, Monitor, MessageCircle, Video, CalendarIcon, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, FileDown, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
