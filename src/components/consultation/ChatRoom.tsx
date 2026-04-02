@@ -1,18 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Paperclip, FileIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChatMessage } from '@/types/consultation';
+import { ChatMessage, ChatFile } from '@/types/consultation';
 import { mockMessages } from '@/data/mockData';
 
 interface Props {
   clientName: string;
   disabled?: boolean;
+  onFileShared?: (file: ChatFile) => void;
 }
 
-export default function ChatRoom({ clientName, disabled }: Props) {
+export default function ChatRoom({ clientName, disabled, onFileShared }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,11 +32,42 @@ export default function ChatRoom({ clientName, disabled }: Props) {
     setInput('');
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || disabled) return;
+
+    const formatSize = (bytes: number) => {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const chatFile: ChatFile = {
+      name: file.name,
+      size: formatSize(file.size),
+      url: URL.createObjectURL(file),
+      type: file.type,
+    };
+
+    const newMsg: ChatMessage = {
+      id: String(messages.length + 1),
+      sender: 'Konsultan',
+      message: `📎 ${file.name}`,
+      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      isUser: true,
+      file: chatFile,
+    };
+
+    setMessages(prev => [...prev, newMsg]);
+    onFileShared?.(chatFile);
+    e.target.value = '';
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-success animate-pulse-live" />
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <h3 className="text-sm font-bold">Chat Room</h3>
         </div>
         <span className="text-xs font-semibold text-primary">{clientName}</span>
@@ -49,7 +82,18 @@ export default function ChatRoom({ clientName, disabled }: Props) {
                 ? 'bg-muted text-foreground rounded-br-sm'
                 : 'bg-primary text-primary-foreground rounded-bl-sm'
             }`}>
-              {msg.message}
+              {msg.file ? (
+                <a href={msg.file.url} download={msg.file.name} className="flex items-center gap-2 hover:opacity-80 transition">
+                  <FileIcon className="h-4 w-4 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium truncate text-xs">{msg.file.name}</p>
+                    <p className="text-[10px] opacity-70">{msg.file.size}</p>
+                  </div>
+                  <Download className="h-3.5 w-3.5 shrink-0 ml-1" />
+                </a>
+              ) : (
+                msg.message
+              )}
             </div>
           </div>
         ))}
@@ -57,6 +101,23 @@ export default function ChatRoom({ clientName, disabled }: Props) {
       </div>
 
       <div className="p-3 border-t flex gap-2">
+        <input type="hidden" />
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={handleFileSelect}
+          disabled={disabled}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+        >
+          <Paperclip className="h-4 w-4" />
+        </Button>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
