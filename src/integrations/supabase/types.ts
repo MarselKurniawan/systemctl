@@ -72,6 +72,7 @@ export type Database = {
           date: string
           duration: number | null
           end_photo: string | null
+          end_time: string | null
           id: string
           jenis_kelamin: string | null
           law_type: string | null
@@ -82,6 +83,7 @@ export type Database = {
           review: string | null
           service_type: string | null
           start_photo: string | null
+          start_time: string | null
           status: Database["public"]["Enums"]["consultation_status"]
           tanggal_lahir: string | null
           telp: string | null
@@ -97,6 +99,7 @@ export type Database = {
           date?: string
           duration?: number | null
           end_photo?: string | null
+          end_time?: string | null
           id?: string
           jenis_kelamin?: string | null
           law_type?: string | null
@@ -107,6 +110,7 @@ export type Database = {
           review?: string | null
           service_type?: string | null
           start_photo?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["consultation_status"]
           tanggal_lahir?: string | null
           telp?: string | null
@@ -122,6 +126,7 @@ export type Database = {
           date?: string
           duration?: number | null
           end_photo?: string | null
+          end_time?: string | null
           id?: string
           jenis_kelamin?: string | null
           law_type?: string | null
@@ -132,6 +137,7 @@ export type Database = {
           review?: string | null
           service_type?: string | null
           start_photo?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["consultation_status"]
           tanggal_lahir?: string | null
           telp?: string | null
