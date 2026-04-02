@@ -99,7 +99,7 @@ export default function ConsultationList() {
     }
 
     return result;
-  }, [search, filterMonth, filterYear, dateFrom, dateTo]);
+  }, [consultations, search, filterMonth, filterYear, dateFrom, dateTo]);
 
   // Summary
   const totalMinutes = filtered.reduce((sum, c) => sum + (c.duration || 0), 0);
