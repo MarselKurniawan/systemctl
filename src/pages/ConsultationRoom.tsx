@@ -222,7 +222,12 @@ export default function ConsultationRoom() {
           {isChat && !started && !ended && <Button onClick={handleStartChat} className="gap-2 h-9 text-sm font-semibold"><MessageCircle className="h-4 w-4" /> Buka Chat</Button>}
           {isChat && chatOpen && !ended && <Button variant="destructive" onClick={handleEndChat} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
           {isVideo && !started && <Button onClick={handleStartVideo} className="gap-2 h-9 text-sm font-semibold"><Video className="h-4 w-4" /> Mulai Video</Button>}
-          {isVideo && started && !ended && <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
+          {isVideo && started && !ended && (
+            <>
+              <Button onClick={handleJoinVideo} className="gap-2 h-9 text-sm font-semibold"><Video className="h-4 w-4" /> Join Video Call</Button>
+              <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>
+            </>
+          )}
         </div>
       </div>
 
