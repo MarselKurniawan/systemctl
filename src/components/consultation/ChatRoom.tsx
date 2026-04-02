@@ -74,8 +74,28 @@ export default function ChatRoom({ consultationId, clientName, disabled }: Props
     return () => { supabase.removeChannel(channel); };
   }, [consultationId, user?.id, fetchMessages]);
 
+  const prevMessagesLenRef = useRef(0);
+  const initialLoadRef = useRef(true);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length === 0) return;
+    
+    // Always scroll on initial load
+    if (initialLoadRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+      initialLoadRef.current = false;
+      prevMessagesLenRef.current = messages.length;
+      return;
+    }
+
+    // Only scroll if new message is from current user
+    if (messages.length > prevMessagesLenRef.current) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.isUser) {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+    prevMessagesLenRef.current = messages.length;
   }, [messages]);
 
   const sendMessage = async () => {

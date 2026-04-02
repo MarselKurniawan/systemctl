@@ -1,4 +1,4 @@
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronRight, Home, Camera, MessageCircle, Video, StopCircle, ArrowLeft, Clock, User, FileText, Calendar, Scale, ImageIcon, Edit2, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import CameraModal from '@/components/consultation/CameraModal';
 import ClientDetailCard from '@/components/consultation/ClientDetailCard';
 import FileListCard from '@/components/consultation/FileListCard';
 import PhotoModal from '@/components/consultation/PhotoModal';
-import JitsiRoom from '@/components/consultation/JitsiRoom';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,6 +27,7 @@ const typeLabel: Record<string, string> = { chat: 'Chat Online', offline: 'Offli
 export default function ConsultationRoom() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { role, profile } = useAuth();
   const { consultation, loading: consultationLoading, updateConsultation } = useConsultation(id);
   const startTimeFromDB = consultation?.startTime || null;
@@ -161,7 +162,13 @@ export default function ConsultationRoom() {
     const durationMins = Math.max(1, Math.floor(timer.seconds / 60));
     updateConsultation({ status: 'completed', duration: durationMins, end_time: new Date().toISOString() });
   };
-  const handleStartVideo = () => { setChatOpen(true); setStarted(true); updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() }); };
+  const handleStartVideo = () => {
+    updateConsultation({ status: 'in_progress', start_time: new Date().toISOString() });
+    navigate(`/video-call/${id}`);
+  };
+  const handleJoinVideo = () => {
+    navigate(`/video-call/${id}`);
+  };
   const handleEndVideo = () => {
     setEnded(true); timer.stop();
     const durationMins = Math.max(1, Math.floor(timer.seconds / 60));
@@ -178,9 +185,6 @@ export default function ConsultationRoom() {
 
   const handleEditPhoto = (mode: 'edit_start' | 'edit_end') => { setCameraMode(mode); setCameraOpen(true); };
 
-  // Jitsi room name based on consultation id
-  const jitsiRoomName = `consultation_${id?.replace(/-/g, '_')}`;
-  const displayName = profile?.nama || 'User';
 
   return (
     <div className="space-y-5">
@@ -215,7 +219,12 @@ export default function ConsultationRoom() {
           {isChat && !started && !ended && <Button onClick={handleStartChat} className="gap-2 h-9 text-sm font-semibold"><MessageCircle className="h-4 w-4" /> Buka Chat</Button>}
           {isChat && chatOpen && !ended && <Button variant="destructive" onClick={handleEndChat} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
           {isVideo && !started && <Button onClick={handleStartVideo} className="gap-2 h-9 text-sm font-semibold"><Video className="h-4 w-4" /> Mulai Video</Button>}
-          {isVideo && started && !ended && <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>}
+          {isVideo && started && !ended && (
+            <>
+              <Button onClick={handleJoinVideo} className="gap-2 h-9 text-sm font-semibold"><Video className="h-4 w-4" /> Join Video Call</Button>
+              <Button variant="destructive" onClick={handleEndVideo} className="gap-2 h-9 text-sm font-semibold"><StopCircle className="h-4 w-4" /> Akhiri</Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -224,9 +233,7 @@ export default function ConsultationRoom() {
         {/* Left: main area */}
         <div className="lg:col-span-3 space-y-5">
           <div className="bg-card rounded-lg border overflow-hidden" style={{ minHeight: '360px' }}>
-            {isVideo && started && !ended ? (
-              <JitsiRoom roomName={jitsiRoomName} displayName={displayName} onClose={handleEndVideo} />
-            ) : (isChat) && chatOpen ? (
+            {(isVideo || isChat) && chatOpen ? (
               <div className="h-[360px] sm:h-[460px] flex flex-col">
               <ChatRoom consultationId={id!} clientName={consultation.clientName} disabled={ended} />
               </div>
