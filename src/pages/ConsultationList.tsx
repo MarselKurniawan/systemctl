@@ -350,6 +350,9 @@ export default function ConsultationList() {
                     <p className="text-xs text-muted-foreground mt-0.5">{c.caseName}</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${statusStyle[c.status]}`}>{statusLabel[c.status]}</span>
+                  {c.status === 'pending' && !c.lawyerUserId && (
+                    <span className="block mt-1 text-[10px] font-medium text-amber-600">Belum ada lawyer</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 mt-2 text-[11px] text-muted-foreground">
                   <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${t.cls}`}>
