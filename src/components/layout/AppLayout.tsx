@@ -4,6 +4,7 @@ import AppSidebar from './AppSidebar';
 import AppHeader from './AppHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import PendingApprovalPage from '@/pages/PendingApprovalPage';
+import { useNewRegistrationNotifier } from '@/hooks/useNewRegistrationNotifier';
 
 export default function AppLayout() {
   const { user, loading, isApproved, role, profile } = useAuth();
