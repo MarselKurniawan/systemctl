@@ -83,7 +83,7 @@ export default function FileListCard({ consultationId }: Props) {
       sender_user_id: user.id,
       sender_name: 'System',
       message: `📎 ${file.name}`,
-      file_url: urlData.publicUrl,
+      file_url: result.url,
       file_name: file.name,
       file_size: formatSize(file.size),
       file_type: file.type,
