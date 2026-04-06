@@ -5,6 +5,7 @@ import { ChatFile } from '@/types/consultation';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { uploadToExternalStorage } from '@/lib/externalStorage';
 
 interface Props {
   consultationId: string;
