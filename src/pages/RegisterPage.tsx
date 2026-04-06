@@ -77,9 +77,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl shadow-2xl p-6 sm:p-8 border" style={{ backgroundColor: '#1e5c3a', borderColor: '#2a7a4e' }}>
           <div className="flex flex-col items-center mb-6">
-            <div className="h-16 w-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: '#d4a017', boxShadow: '0 0 20px rgba(212,160,23,0.3)' }}>
-              <Scale className="h-8 w-8" style={{ color: '#1a3a2a' }} />
-            </div>
+            <img src={legalEmblem} alt="Bantuan Hukum Online" width={100} height={100} className="mb-2" />
             <h1 className="text-2xl font-bold text-white">
               Bantuan Hukum <span style={{ color: '#d4a017' }}>Online</span>
             </h1>
