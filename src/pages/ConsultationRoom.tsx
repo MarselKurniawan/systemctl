@@ -67,6 +67,9 @@ export default function ConsultationRoom() {
       if (consultation.status === 'completed') {
         setStarted(true);
         setEnded(true);
+        if (consultation.consultationType === 'chat' || consultation.consultationType === 'video_call') {
+          setChatOpen(true);
+        }
       }
     }
   }, [consultation]);
