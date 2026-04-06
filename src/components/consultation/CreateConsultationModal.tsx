@@ -83,30 +83,58 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
     if (field === 'nik') setNikFound(false);
   };
 
-  // NIK lookup
-  const lookupNik = async () => {
-    if (form.nik.length !== 16) return;
-    setNikSearching(true);
+  // NIK autocomplete search
+  const searchNik = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setNikSuggestions([]);
+      setShowNikDropdown(false);
+      return;
+    }
     const { data } = await supabase
       .from('profiles')
-      .select('nama, nik, nomor_wa, tanggal_lahir, jenis_kelamin, penyandang_disabilitas')
-      .eq('nik', form.nik)
-      .limit(1);
+      .select('nik, nama, nomor_wa, tanggal_lahir, jenis_kelamin, penyandang_disabilitas')
+      .not('nik', 'is', null)
+      .ilike('nik', `${query}%`)
+      .limit(5);
     
-    if (data && data.length > 0) {
-      const p = data[0];
-      setForm(prev => ({
-        ...prev,
-        namaPengguna: p.nama || prev.namaPengguna,
-        telp: p.nomor_wa || prev.telp,
-        tanggalLahir: p.tanggal_lahir || prev.tanggalLahir,
-        jenisKelamin: p.jenis_kelamin || prev.jenisKelamin,
-        penyandangDisabilitas: p.penyandang_disabilitas ? 'Ya' : 'Tidak',
-      }));
-      setNikFound(true);
-      toast({ title: 'Data ditemukan', description: `Data ${p.nama} berhasil dimuat dari NIK` });
-    }
-    setNikSearching(false);
+    const results = (data || []).filter(d => d.nik) as NikSuggestion[];
+    setNikSuggestions(results);
+    setShowNikDropdown(results.length > 0);
+  }, []);
+
+  // Debounced NIK search
+  useEffect(() => {
+    if (isClient || nikFound) return;
+    const timer = setTimeout(() => searchNik(form.nik), 300);
+    return () => clearTimeout(timer);
+  }, [form.nik, isClient, nikFound, searchNik]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (nikDropdownRef.current && !nikDropdownRef.current.contains(e.target as Node) &&
+          nikInputRef.current && !nikInputRef.current.contains(e.target as Node)) {
+        setShowNikDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const selectNikSuggestion = (suggestion: NikSuggestion) => {
+    setForm(prev => ({
+      ...prev,
+      nik: suggestion.nik,
+      namaPengguna: suggestion.nama || prev.namaPengguna,
+      telp: suggestion.nomor_wa || prev.telp,
+      tanggalLahir: suggestion.tanggal_lahir || prev.tanggalLahir,
+      jenisKelamin: suggestion.jenis_kelamin || prev.jenisKelamin,
+      penyandangDisabilitas: suggestion.penyandang_disabilitas ? 'Ya' : 'Tidak',
+    }));
+    setNikFound(true);
+    setShowNikDropdown(false);
+    setNikSuggestions([]);
+    toast({ title: 'Data ditemukan', description: `Data ${suggestion.nama} berhasil dimuat dari NIK` });
   };
 
   // Fetch master data & lawyers
