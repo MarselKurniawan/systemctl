@@ -196,7 +196,11 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
       return;
     }
 
-    toast({ title: 'Berhasil', description: 'Konsultasi baru berhasil dibuat' });
+    if (!lawyerUserId) {
+      toast({ title: 'Berhasil', description: 'Konsultasi dibuat. Belum ada pengacara online, konsultasi menunggu untuk di-assign.' });
+    } else {
+      toast({ title: 'Berhasil', description: 'Konsultasi baru berhasil dibuat' });
+    }
     onClose();
     
     if (data) {
