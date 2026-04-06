@@ -470,7 +470,7 @@ export default function ConsultationRoom() {
         open={assignLawyerOpen}
         onClose={() => setAssignLawyerOpen(false)}
         consultationId={id!}
-        onAssigned={() => { fetchConsultation(); }}
+        onAssigned={() => { refetch(); }}
       />
     </div>
   );
