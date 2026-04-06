@@ -273,18 +273,53 @@ export default function CreateConsultationModal({ open, onClose, onCreated }: Pr
             </div>
           ) : (
             <>
-            {/* Row 1 - NIK with lookup */}
+            {/* Row 1 - NIK with autocomplete */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <Label className="text-sm font-semibold">NIK (16 digit)</Label>
-                <div className="flex gap-2">
-                  <Input value={form.nik} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }} placeholder="Masukkan 16 digit NIK" maxLength={16} className="flex-1" />
-                  <Button type="button" variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={lookupNik} disabled={form.nik.length !== 16 || nikSearching}>
-                    {nikFound ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : <Search className="h-4 w-4" />}
-                  </Button>
+                <div className="relative">
+                  <Input
+                    ref={nikInputRef}
+                    value={form.nik}
+                    onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 16); update('nik', v); }}
+                    onFocus={() => { if (nikSuggestions.length > 0 && !nikFound) setShowNikDropdown(true); }}
+                    placeholder="Ketik NIK untuk mencari..."
+                    maxLength={16}
+                    className="pr-8"
+                  />
+                  {nikFound ? (
+                    <CheckCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  )}
                 </div>
-                {form.nik.length > 0 && form.nik.length < 16 && <p className="text-xs text-destructive">{form.nik.length}/16 digit</p>}
+                {form.nik.length > 0 && form.nik.length < 16 && !nikFound && (
+                  <p className="text-xs text-muted-foreground">{form.nik.length}/16 digit</p>
+                )}
                 {nikFound && <p className="text-xs text-emerald-600 font-medium">✓ Data ditemukan & dimuat</p>}
+
+                {/* Suggestions dropdown */}
+                {showNikDropdown && (
+                  <div
+                    ref={nikDropdownRef}
+                    className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+                  >
+                    {nikSuggestions.map((s) => (
+                      <button
+                        key={s.nik}
+                        type="button"
+                        onClick={() => selectNikSuggestion(s)}
+                        className="w-full text-left px-3 py-2.5 hover:bg-accent transition-colors flex items-center gap-3 border-b border-border last:border-b-0"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{s.nama}</p>
+                          <p className="text-xs text-muted-foreground">NIK: {s.nik}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold">Nama Pengguna</Label>
