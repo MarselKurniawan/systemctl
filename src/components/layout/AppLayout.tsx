@@ -9,6 +9,7 @@ import { useNewRegistrationNotifier } from '@/hooks/useNewRegistrationNotifier';
 export default function AppLayout() {
   const { user, loading, isApproved, role, profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useNewRegistrationNotifier();
 
   if (loading) {
     return (
