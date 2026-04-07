@@ -164,7 +164,7 @@ export default function ChatRoom({ consultationId, clientName, disabled }: Props
         <span className="text-xs font-semibold text-primary">{clientName}</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[hsl(150,30%,15%)]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundColor: 'hsl(var(--chat-bg))' }}>
         {loading && <p className="text-center text-xs text-muted-foreground">Memuat pesan...</p>}
         {messages.map((msg) => (
           <div key={msg.id} className={`flex flex-col ${msg.isUser ? 'items-end' : 'items-start'}`}>
