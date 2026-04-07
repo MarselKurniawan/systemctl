@@ -61,11 +61,8 @@ export default function ConsultationList() {
   const [perPage, setPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Available years from data
-  const years = useMemo(() => {
-    const ys = new Set(consultations.map(c => { const p = parseDateString(c.date); return p ? p.getFullYear() : 0; }).filter(Boolean));
-    return Array.from(ys).sort((a, b) => (b as number) - (a as number));
-  }, [consultations]);
+  // Static years 2023-2030
+  const years = [2030, 2029, 2028, 2027, 2026, 2025, 2024, 2023];
 
   // Filter logic
   const filtered = useMemo(() => {
