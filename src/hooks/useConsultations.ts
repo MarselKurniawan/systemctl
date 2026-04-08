@@ -144,7 +144,14 @@ export function useConsultation(id: string | undefined) {
 
   useEffect(() => { fetchConsultation(); }, [fetchConsultation]);
 
-  const updateConsultation = async (updates: Record<string, any>) => {
+  const updateConsultation = async (updates: Partial<{
+    agenda: string; case_name: string; client_name: string; client_user_id: string;
+    consultation_type: 'chat' | 'offline' | 'video_call'; date: string; duration: number;
+    end_photo: string; end_time: string; jenis_kelamin: string; law_type: string;
+    lawyer_user_id: string; nik: string; penyandang_disabilitas: boolean; rating: number;
+    review: string; service_type: string; start_photo: string; start_time: string;
+    status: 'pending' | 'in_progress' | 'completed'; tanggal_lahir: string; telp: string;
+  }>) => {
     if (!id) return;
     const { error } = await supabase
       .from('consultations')

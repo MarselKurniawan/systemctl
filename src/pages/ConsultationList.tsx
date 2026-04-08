@@ -71,7 +71,24 @@ export default function ConsultationList() {
     // Search
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(c => c.clientName.toLowerCase().includes(q) || c.caseName.toLowerCase().includes(q));
+      const typeLabels: Record<string, string> = { offline: 'offline', chat: 'chat', video_call: 'video call' };
+      const statusLabels: Record<string, string> = { pending: 'pending', in_progress: 'in progress', completed: 'completed selesai' };
+      result = result.filter(c => {
+        const fields = [
+          c.clientName,
+          c.caseName,
+          typeLabels[c.consultationType] || c.consultationType,
+          c.lawType,
+          c.serviceType,
+          c.date,
+          c.lawyerName,
+          c.agenda,
+          statusLabels[c.status] || c.status,
+          c.nik,
+          c.telp,
+        ];
+        return fields.some(f => f && f.toLowerCase().includes(q));
+      });
     }
 
     // Month/Year
