@@ -46,6 +46,13 @@ Deno.serve(async (req) => {
   const body = await req.json();
   const { action, user_id, profile_data, new_role, role } = body;
 
+  // Lawyers can only create virtual clients
+  if (callerRole.role === "lawyer" && !["insert_role", "create_virtual_client"].includes(action)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // insert_role action - for virtual clients (no auth user)
   if (action === "insert_role") {
     const { error } = await supabaseAdmin.from("user_roles").insert({ user_id, role: role || "client" });
