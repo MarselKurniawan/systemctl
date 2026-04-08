@@ -44,7 +44,20 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json();
-  const { action, user_id, profile_data, new_role } = body;
+  const { action, user_id, profile_data, new_role, role } = body;
+
+  // insert_role action - for virtual clients (no auth user)
+  if (action === "insert_role") {
+    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id, role: role || "client" });
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // Admin cannot modify admin/superadmin users
   if (callerRole.role === "admin") {
