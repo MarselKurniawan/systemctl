@@ -55,6 +55,8 @@ export default function ConsultationList() {
   const [showFilter, setShowFilter] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
 
   // Filter state
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -158,11 +160,33 @@ export default function ConsultationList() {
   const canDelete = role === 'superadmin' || role === 'admin';
 
   const handleExport = async (type: 'pdf' | 'csv' | 'excel') => {
-    const label = getFilterLabel();
-    if (type === 'pdf') await exportToPDF(filtered, label);
-    else if (type === 'csv') exportToCSV(filtered, label);
-    else exportToExcel(filtered, label);
     setShowExportMenu(false);
+    setExporting(true);
+    const typeLabels = { pdf: 'PDF', csv: 'CSV', excel: 'Excel' };
+    setExportProgress(`Menyiapkan data ${typeLabels[type]}...`);
+    try {
+      const label = getFilterLabel();
+      if (type === 'pdf') {
+        setExportProgress('Memuat foto bukti konsultasi...');
+        await exportToPDF(filtered, label);
+      } else if (type === 'csv') {
+        setExportProgress('Membuat file CSV...');
+        await new Promise(r => setTimeout(r, 300));
+        exportToCSV(filtered, label);
+      } else {
+        setExportProgress('Membuat file Excel...');
+        await new Promise(r => setTimeout(r, 300));
+        exportToExcel(filtered, label);
+      }
+      setExportProgress('Download berhasil!');
+      await new Promise(r => setTimeout(r, 800));
+      toast.success(`File ${typeLabels[type]} berhasil diunduh`);
+    } catch (err) {
+      toast.error('Gagal mengekspor data');
+    } finally {
+      setExporting(false);
+      setExportProgress('');
+    }
   };
 
   const stats = [
