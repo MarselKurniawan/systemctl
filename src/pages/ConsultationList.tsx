@@ -53,6 +53,8 @@ export default function ConsultationList() {
   const [showCreate, setShowCreate] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filter state
   const [filterMonth, setFilterMonth] = useState<string>('all');
