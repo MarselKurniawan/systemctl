@@ -554,6 +554,15 @@ export default function ConsultationList() {
         </div>
       </div>
     )}
+
+    {/* Photo Preview Dialog */}
+    <Dialog open={!!previewPhoto} onOpenChange={(open) => !open && setPreviewPhoto(null)}>
+      <DialogContent className="max-w-lg p-2">
+        {previewPhoto && (
+          <img src={previewPhoto} alt="Bukti Konsultasi" className="w-full h-auto rounded-lg" />
+        )}
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
