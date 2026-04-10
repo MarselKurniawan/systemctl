@@ -332,12 +332,12 @@ export async function exportToPDF(data: Consultation[], filterLabel: string) {
 
 export function exportToCSV(data: Consultation[], filterLabel: string) {
   const summary = buildSummary(data);
-  const headers = ['No', 'Klien', 'Nama Kasus', 'Tipe', 'Layanan', 'Hukum', 'Tanggal', 'Status', 'Durasi (menit)', 'Pengacara', 'Rating', 'Ulasan', 'Bukti Foto Mulai', 'Bukti Foto Selesai'];
+  const headers = ['No', 'Klien', 'Nama Kasus', 'Tipe', 'Layanan', 'Hukum', 'Tanggal', 'Status', 'Durasi (menit)', 'Pengacara', 'Rating', 'Ulasan', 'URL Foto Mulai', 'URL Foto Selesai'];
   const rows = data.map((c, i) => [
     i + 1, c.clientName, c.caseName, typeLabel[c.consultationType], c.serviceType, c.lawType, c.date, statusLabel[c.status], c.duration || 0, c.lawyerName || '-',
     c.rating || '-', c.review || '-',
-    c.startPhoto ? 'Ada' : '-',
-    c.endPhoto ? 'Ada' : '-',
+    c.startPhoto || '-',
+    c.endPhoto || '-',
   ]);
 
   let csv = `Laporan Konsultasi Hukum\nFilter: ${filterLabel}\n\n`;
@@ -364,8 +364,8 @@ export function exportToExcel(data: Consultation[], filterLabel: string) {
     'Pengacara': c.lawyerName || '-',
     'Rating': c.rating || '-',
     'Ulasan': c.review || '-',
-    'Bukti Foto Mulai': c.startPhoto ? 'Ada (lihat di sistem)' : '-',
-    'Bukti Foto Selesai': c.endPhoto ? 'Ada (lihat di sistem)' : '-',
+    'URL Foto Mulai': c.startPhoto || '-',
+    'URL Foto Selesai': c.endPhoto || '-',
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);

@@ -502,6 +502,23 @@ export default function ConsultationList() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Export Loading Overlay */}
+    {exporting && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="bg-card rounded-xl border shadow-2xl p-8 max-w-sm w-full mx-4 text-center space-y-4">
+          <div className="mx-auto w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div>
+            <h3 className="font-semibold text-lg">Mengekspor Data</h3>
+            <p className="text-sm text-muted-foreground mt-1">{exportProgress}</p>
+          </div>
+          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: '70%' }} />
+          </div>
+          <p className="text-xs text-muted-foreground">Mohon tunggu, jangan tutup halaman ini</p>
+        </div>
+      </div>
+    )}
     </>
   );
 }
