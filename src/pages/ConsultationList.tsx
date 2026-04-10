@@ -156,6 +156,8 @@ export default function ConsultationList() {
   };
 
   const canDelete = role === 'superadmin' || role === 'admin';
+
+  const handleExport = async (type: 'pdf' | 'csv' | 'excel') => {
     const label = getFilterLabel();
     if (type === 'pdf') await exportToPDF(filtered, label);
     else if (type === 'csv') exportToCSV(filtered, label);
