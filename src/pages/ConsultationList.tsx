@@ -13,6 +13,9 @@ import { exportToPDF, exportToCSV, exportToExcel } from '@/lib/exportUtils';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 const statusStyle: Record<string, string> = {
   pending: 'bg-amber-50 text-amber-700 border border-amber-200',
@@ -45,11 +48,13 @@ const PER_PAGE_OPTIONS = [10, 20, 30, 0]; // 0 = show all
 export default function ConsultationList() {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const { consultations, loading: consultationsLoading } = useConsultations();
+  const { consultations, loading: consultationsLoading, refetch } = useConsultations();
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filter state
   const [filterMonth, setFilterMonth] = useState<string>('all');
@@ -136,7 +141,21 @@ export default function ConsultationList() {
     return parts.length > 0 ? parts.join(' ') : 'Semua Data';
   };
 
-  const handleExport = async (type: 'pdf' | 'csv' | 'excel') => {
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from('consultations').delete().eq('id', deleteTarget.id);
+    if (error) {
+      toast.error('Gagal menghapus konsultasi');
+    } else {
+      toast.success(`Konsultasi "${deleteTarget.name}" berhasil dihapus`);
+      refetch();
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
+  };
+
+  const canDelete = role === 'superadmin' || role === 'admin';
     const label = getFilterLabel();
     if (type === 'pdf') await exportToPDF(filtered, label);
     else if (type === 'csv') exportToCSV(filtered, label);
@@ -335,10 +354,12 @@ export default function ConsultationList() {
                           className="p-1.5 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </button>
-                        <button onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {canDelete && (
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: c.id, name: c.clientName }); }}
+                            className="p-1.5 hover:bg-destructive/10 rounded transition-colors text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -438,6 +459,23 @@ export default function ConsultationList() {
         }
       }}
     />
+
+    <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Hapus Konsultasi?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Konsultasi <strong>"{deleteTarget?.name}"</strong> akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {deleting ? 'Menghapus...' : 'Hapus'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
