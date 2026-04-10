@@ -414,7 +414,7 @@ export default function ConsultationList() {
                 );
               })}
               {paginated.length === 0 && (
-                <tr><td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">Tidak ada data ditemukan</td></tr>
+                <tr><td colSpan={10} className="py-12 text-center text-muted-foreground text-sm">Tidak ada data ditemukan</td></tr>
               )}
             </tbody>
           </table>
