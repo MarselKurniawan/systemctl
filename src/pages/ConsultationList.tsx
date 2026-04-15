@@ -225,6 +225,17 @@ export default function ConsultationList() {
         )}
       </div>
 
+      {/* Working hours alert */}
+      {isOutsideWorkingHours && (
+        <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700">
+          <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
+          <AlertTitle className="font-bold">SAAT INI BERADA DILUAR JAM KERJA!</AlertTitle>
+          <AlertDescription className="text-sm">
+            Jam Kerja: Senin - Jumat, 09.00 - 17.00 WIB
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
