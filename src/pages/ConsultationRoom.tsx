@@ -406,7 +406,7 @@ export default function ConsultationRoom() {
                   {editingDuration ? (
                     <div className="flex items-center gap-2 mt-1">
                       <Input type="number" value={editDurationValue} onChange={(e) => setEditDurationValue(e.target.value)} className="h-7 w-20 text-xs" min={0} />
-                      <span className="text-xs text-muted-foreground">menit</span>
+                      <span className="text-xs text-muted-foreground">Detik</span>
                       <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSaveDuration}><Save className="h-3 w-3" /> Simpan</Button>
                       <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingDuration(false)}>Batal</Button>
                     </div>
