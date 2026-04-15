@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { formatDurationText } from '@/hooks/useTimer';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, ExternalLink, Trash2, Plus, Monitor, MessageCircle, Video, CalendarIcon, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, FileDown, Clock, X, Camera, ImageIcon } from 'lucide-react';
+import { Search, Download, ExternalLink, Trash2, Plus, Monitor, MessageCircle, Video, CalendarIcon, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, FileDown, Clock, X, Camera, ImageIcon, AlertTriangle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -200,6 +201,14 @@ export default function ConsultationList() {
 
   const hasActiveFilter = filterMonth !== 'all' || filterYear !== 'all' || dateFrom || dateTo;
 
+  // Working hours check: Mon-Fri 09:00-17:00
+  const isOutsideWorkingHours = useMemo(() => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 6=Sat
+    const hour = now.getHours();
+    return day === 0 || day === 6 || hour < 9 || hour >= 17;
+  }, []);
+
   return (
     <>
     <div className="space-y-5">
@@ -215,6 +224,17 @@ export default function ConsultationList() {
           </Button>
         )}
       </div>
+
+      {/* Working hours alert */}
+      {isOutsideWorkingHours && (
+        <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700">
+          <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
+          <AlertTitle className="font-bold">SAAT INI BERADA DILUAR JAM KERJA!</AlertTitle>
+          <AlertDescription className="text-sm">
+            Jam Kerja: Senin - Jumat, 09.00 - 17.00 WIB
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

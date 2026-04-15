@@ -314,6 +314,50 @@ export async function exportToPDF(data: Consultation[], filterLabel: string) {
     }
   }
 
+  // === LAST PAGE: Summary & Notes ===
+  doc.addPage('portrait');
+  const lpw = doc.internal.pageSize.width;
+  let noteY = 20;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0);
+  doc.text(`Jumlah Data: ${data.length}`, 14, noteY);
+  noteY += 7;
+  doc.text(`Total Durasi: ${summary.totalFormatted}`, 14, noteY);
+  noteY += 14;
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Catatan :', 14, noteY);
+  noteY += 7;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const catatanLines = [
+    'Jenis Layanan berupa:',
+    'a. Pemberian Informasi, Konsultasi, atau Advis Hukum',
+    'b. Bantuan Pembuatan Dokumen Hukum',
+    'c. Penyediaan Informasi Daftar Organisasi Bantuan Hukum Yang Dapat',
+    '   Memberikan bantuan Hukum Cuma-Cuma',
+    '   (Pasal 25 Perma No. 1 Tahun 2014)',
+  ];
+  catatanLines.forEach(line => {
+    doc.text(line, 18, noteY);
+    noteY += 5;
+  });
+
+  noteY += 20;
+  // Signature area on the right
+  const sigX = lpw - 90;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Semarang , _________________________', sigX, noteY, { align: 'left' });
+  noteY += 12;
+  doc.text('Nama Mitra Hukum', sigX, noteY, { align: 'left' });
+  noteY += 25;
+  doc.text('_________________________________', sigX, noteY, { align: 'left' });
+
   // Footer on all pages
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
