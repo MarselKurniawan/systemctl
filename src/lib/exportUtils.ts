@@ -386,7 +386,7 @@ export function exportToCSV(data: Consultation[], filterLabel: string) {
   const summary = buildSummary(data);
   const headers = ['No', 'Klien', 'Nama Kasus', 'Tipe', 'Layanan', 'Hukum', 'Tanggal', 'Status', 'Durasi', 'Pengacara', 'Rating', 'Ulasan', 'URL Foto Mulai', 'URL Foto Selesai'];
   const rows = data.map((c, i) => [
-    i + 1, c.clientName, c.caseName, typeLabel[c.consultationType], c.serviceType, c.lawType, c.date, statusLabel[c.status], c.duration || 0, c.lawyerName || '-',
+    i + 1, c.clientName, c.caseName, typeLabel[c.consultationType], c.serviceType, c.lawType, c.date, statusLabel[c.status], c.duration ? formatDurationHMS(c.duration) : '-', c.lawyerName || '-',
     c.rating || '-', c.review || '-',
     c.startPhoto || '-',
     c.endPhoto || '-',
