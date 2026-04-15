@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { formatDurationText, formatDurationHMS } from '@/hooks/useTimer';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download, ExternalLink, Trash2, Plus, Monitor, MessageCircle, Video, CalendarIcon, ChevronLeft, ChevronRight, FileText, FileSpreadsheet, FileDown, Clock, X, Camera, ImageIcon, AlertTriangle } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
