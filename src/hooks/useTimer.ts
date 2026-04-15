@@ -41,11 +41,21 @@ export function useTimer(startTimeISO?: string | null) {
   return { seconds, isRunning, start, stop, reset, formatted };
 }
 
-export function formatDurationText(minutes: number): string {
-  if (!minutes || minutes <= 0) return '-';
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0 && mins > 0) return `${hours} jam ${mins} menit`;
-  if (hours > 0) return `${hours} jam`;
-  return `${mins} menit`;
+export function formatDurationText(seconds: number): string {
+  if (!seconds || seconds <= 0) return '-';
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0 && mins > 0) return `${hours} jam ${mins} menit ${secs} detik`;
+  if (hours > 0) return `${hours} jam ${secs > 0 ? `0 menit ${secs} detik` : ''}`;
+  if (mins > 0) return `${mins} menit ${secs} detik`;
+  return `${secs} detik`;
+}
+
+export function formatDurationHMS(seconds: number): string {
+  if (!seconds || seconds <= 0) return '00:00:00';
+  const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
 }
