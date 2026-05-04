@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { supabase } from '@/integrations/supabase/client';
 
 const typeLabel: Record<string, string> = { chat: 'Chat', offline: 'Offline', video_call: 'Video Call' };
 const statusLabel: Record<string, string> = { pending: 'Belum Mulai', in_progress: 'Sedang Berlangsung', completed: 'Selesai' };
@@ -40,16 +41,26 @@ function buildSummary(data: Consultation[]) {
 async function loadImageAsBase64(url: string): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith('data:')) return url;
+  // Try direct fetch first (works for same-origin / CORS-enabled)
   try {
     const response = await fetch(url, { mode: 'cors' });
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
+    if (response.ok) {
+      const blob = await response.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch {
+    // fall through to proxy
+  }
+  // Fallback: use edge function proxy to bypass CORS
+  try {
+    const { data, error } = await supabase.functions.invoke('image-proxy', { body: { url } });
+    if (error || !data?.dataUrl) return null;
+    return data.dataUrl as string;
   } catch {
     return null;
   }
